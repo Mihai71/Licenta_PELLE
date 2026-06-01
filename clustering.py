@@ -372,9 +372,13 @@ def _bias_between_groups(df_grp, group_col, income_series, label):
             result["cohen_d_label"] = ("Neglijabil" if d < 0.2 else "Mic" if d < 0.5
                                         else "Mediu" if d < 0.8 else "Mare")
         else:
-            means_arr = np.array(list(group_means.values()))
-            result["cohen_d"]       = round(float(np.std(means_arr) / max(np.mean(means_arr), 0.001)), 4)
-            result["cohen_d_label"] = "Multi-grup"
+            all_vals   = np.concatenate(list(groups.values()))
+            grand_mean = np.mean(all_vals)
+            ss_between = sum(len(v) * (np.mean(v) - grand_mean) ** 2 for v in groups.values())
+            ss_total   = float(np.sum((all_vals - grand_mean) ** 2))
+            eta2       = ss_between / ss_total if ss_total > 0 else 0.0
+            result["cohen_d"]       = round(float(eta2), 4)
+            result["cohen_d_label"] = "η² (Multi-grup)"
 
         return result
     except Exception:
