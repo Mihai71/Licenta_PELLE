@@ -1095,7 +1095,7 @@ server <- function(input, output, session) {
                         div(class = "alert-box alert-red",
                             icon("exclamation-triangle"), strong(" ALERTĂ CRITICĂ: "),
                             paste0("Grupul '", item$group, "' reprezintă doar ",
-                                   round(item$pct, 1), "% din date (sub pragul de 20%)."))
+                                   round(item$pct, 1), "% din date (sub pragul dinamic de 0,5/k)."))
       )
     }
     
