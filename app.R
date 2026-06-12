@@ -11,6 +11,7 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(reticulate)
+library(httr)
 library(jsonlite)
 
 # Plotly pentru grafice interactive – FR-07
@@ -22,6 +23,7 @@ if (requireNamespace("readxl", quietly = TRUE)) library(readxl)
 source("R/standards.R")
 source_python("logic.py")
 source_python("clustering.py")
+source("llm.R")
 
 # ---------------------------------------------------------------------------
 # Helpere R
@@ -52,7 +54,44 @@ bias_label <- function(score) {
   score <- as.numeric(score)
   if (score < 0.20) "Neglijabil" else if (score < 0.50) "Moderat" else "Ridicat"
 }
-
+llm_box_ui <- function(sfx) {
+  fluidRow(
+    conditionalPanel(
+      condition = "output.file_loaded",
+      box(
+        title       = tagList(icon("robot"), " Interpretare AI (Ollama)"),
+        status      = "info", solidHeader = TRUE, width = 12,
+        collapsible = TRUE, collapsed = FALSE,
+        div(
+          style = paste0(
+            "max-height:320px; overflow-y:auto; padding:10px;",
+            " border:1px solid #d6eaf8; border-radius:4px;",
+            " background:#f5f8fa; margin-bottom:10px;"
+          ),
+          uiOutput(paste0("ui_llm_chat_", sfx))
+        ),
+        fluidRow(
+          column(9,
+                 textInput(paste0("llm_msg_", sfx), NULL,
+                           placeholder = "Pune o întrebare despre rezultate...",
+                           width = "100%")
+          ),
+          column(3,
+                 actionButton(paste0("btn_send_", sfx), "Trimite",
+                              icon  = icon("paper-plane"),
+                              class = "btn-primary btn-block")
+          )
+        ),
+        div(
+          style = "margin-top:8px;",
+          actionButton(paste0("btn_gen_", sfx), "Generează interpretare",
+                       icon  = icon("magic"),
+                       class = "btn-success btn-sm")
+        )
+      )
+    )
+  )
+}
 # ---------------------------------------------------------------------------
 # UI
 # ---------------------------------------------------------------------------
@@ -247,7 +286,8 @@ ui <- dashboardPage(
                     ),
                     DTOutput("tbl_group_summary")
                 )
-              )
+              ),
+              llm_box_ui("bias")
       ),
       
       # -----------------------------------------------------------------------
@@ -300,7 +340,8 @@ ui <- dashboardPage(
                     ),
                     DTOutput("tbl_socio_summary")
                 )
-              )
+              ),
+              llm_box_ui("socio")
       ),
       
       # -----------------------------------------------------------------------
@@ -471,7 +512,8 @@ ui <- dashboardPage(
                       plotly::plotlyOutput("plot_cluster_income", height = "350px")
                   )
                 )
-              )
+              ),
+              llm_box_ui("clustering")
       ),
       # -----------------------------------------------------------------------
       # TAB EXPORT
@@ -568,6 +610,7 @@ server <- function(input, output, session) {
       df
     )
     data_working(df)
+    llm_history(list())
   }, ignoreNULL = TRUE)
   
   # Proxy DT pentru actualizări fără re-render complet
@@ -1584,11 +1627,14 @@ server <- function(input, output, session) {
   
   # Stochează rezultatele clustering
   clustering_result <- reactiveVal(NULL)
+  llm_history       <- reactiveVal(list())
   
   # Flag pentru conditionalPanel
   output$clustering_done <- reactive({
     !is.null(clustering_result()) && is.null(clustering_result()$error)
   })
+  output$file_loaded <- reactive({ !is.null(input$file) })
+  outputOptions(output, "file_loaded", suspendWhenHidden = FALSE)
   outputOptions(output, "clustering_done", suspendWhenHidden = FALSE)
   
   # Buton Rulează Clustering
@@ -2086,6 +2132,207 @@ server <- function(input, output, session) {
         legend = list(orientation = "h")
       )
   })
+  # -------------------------------------------------------------------------
+  # LLM — interpretare și dialog
+  # -------------------------------------------------------------------------
+  
+  .render_llm_chat <- function() {
+    renderUI({
+      hist <- llm_history()
+      if (length(hist) == 0) {
+        return(p(style = "color:#aaa; text-align:center; padding:24px 0; font-style:italic;",
+                 icon("robot"),
+                 " Apasă 'Generează interpretare' pentru analiză AI sau pune o întrebare."))
+      }
+      items <- lapply(hist, function(msg) {
+        if (msg$role == "user") {
+          div(style = "text-align:right; margin:4px 0;",
+              div(style = paste0("display:inline-block; max-width:85%;",
+                                 " background:#2980b9; color:white;",
+                                 " padding:8px 12px; border-radius:12px 12px 2px 12px;",
+                                 " font-size:0.88em; white-space:pre-wrap;"),
+                  msg$content))
+        } else if (msg$role == "assistant") {
+          div(style = "text-align:left; margin:4px 0;",
+              div(style = paste0("display:inline-block; max-width:90%;",
+                                 " background:#ecf0f1; color:#2c3e50;",
+                                 " padding:8px 12px; border-radius:12px 12px 12px 2px;",
+                                 " font-size:0.88em; white-space:pre-wrap;"),
+                  msg$content))
+        } else NULL
+      })
+      tagList(items)
+    })
+  }
+  
+  output$ui_llm_chat_bias       <- .render_llm_chat()
+  output$ui_llm_chat_socio      <- .render_llm_chat()
+  output$ui_llm_chat_clustering <- .render_llm_chat()
+  
+  # Helper: construiește contextul complet (rezultate + metadate) pentru LLM
+  .llm_build_context <- function() {
+    mr  <- tryCatch(metrics_result(),    error = function(e) NULL)
+    dal <- tryCatch(dist_alerts(),       error = function(e) NULL)
+    br  <- tryCatch(bias_result(),       error = function(e) NULL)
+    cr  <- tryCatch(clustering_result(), error = function(e) NULL)
+    
+    socio_res <- tryCatch({
+      sdf <- socio_result()
+      if (is.null(sdf) || nrow(sdf) == 0) NULL else {
+        ref_country <- input$socio_ref_country
+        ref_val <- if (!is.null(ref_country) && ref_country != "NONE")
+          tryCatch(get_eurostat_reference("salary", ref_country),
+                   error = function(e) NA)
+        else NA
+        list(df = as.data.frame(sdf), type = input$socio_type,
+             target_col  = input$socio_target_col,
+             ref_country = ref_country, ref_val = ref_val)
+      }
+    }, error = function(e) NULL)
+    
+    ctx <- tryCatch({
+      info  <- data_info()
+      df    <- data_for_analysis()
+      cols  <- names(df)
+      types <- info$types
+      
+      col_desc <- vapply(cols, function(cc) {
+        tp <- tryCatch(as.character(types[[cc]]), error = function(e) NA_character_)
+        if (length(tp) == 1 && !is.na(tp)) paste0(cc, " (", tp, ")") else cc
+      }, character(1))
+      if (length(col_desc) > 30)
+        col_desc <- c(col_desc[1:30],
+                      sprintf("... (+%d altele)", length(col_desc) - 30))
+      
+      nm_low <- tolower(cols)
+      warns  <- character(0)
+      if (!any(grepl("v[âa]rst|agea|\\bage\\b", nm_low)))
+        warns <- c(warns, "Nu s-a detectat o coloană de vârstă — analizele pe grupe de vârstă pot lipsi sau pot fi eronate.")
+      if (!any(grepl("educa|studi|eisced|isced|\\bedu", nm_low)))
+        warns <- c(warns, "Nu s-a detectat o coloană de educație — analizele pe nivel de educație pot lipsi sau pot fi eronate.")
+      if (!any(grepl("regiu|jude|nuts|localit|zona|domicil|cntry|country|mediu", nm_low)))
+        warns <- c(warns, "Nu s-a detectat o coloană de regiune/mediu — analizele regionale pot lipsi sau pot fi eronate.")
+      
+      tgt <- input$target
+      if (!is.null(tgt) && nzchar(tgt) && tgt %in% cols) {
+        t_type <- tryCatch(as.character(types[[tgt]]), error = function(e) "")
+        if (identical(t_type, "Numerica")) {
+          v <- suppressWarnings(as.numeric(as.character(df[[tgt]])))
+          pct_bad <- round(mean(is.na(v)) * 100, 1)
+          if (pct_bad > 20)
+            warns <- c(warns, sprintf("Coloana țintă '%s' are %.1f%% valori lipsă sau non-numerice — rezultatele pot fi distorsionate.", tgt, pct_bad))
+        }
+      }
+      
+      if (!is.null(socio_res)) {
+        stc <- tolower(if (is.null(socio_res$target_col)) "" else socio_res$target_col)
+        if (!grepl("sal|venit|income|wage|earn|hinct|pay", stc))
+          warns <- c(warns, sprintf("Indicatorul socio-demografic '%s' nu pare monetar — comparația cu referințele salariale în RON poate să nu aibă sens.", socio_res$target_col))
+      }
+      
+      sens <- input$sensitive
+      list(
+        n_rows         = nrow(df), n_cols = ncol(df),
+        sensitive      = sens,
+        sensitive_type = tryCatch(as.character(types[[sens]]), error = function(e) NULL),
+        target         = tgt,
+        target_type    = tryCatch(as.character(types[[tgt]]),  error = function(e) NULL),
+        columns        = col_desc,
+        warnings       = warns
+      )
+    }, error = function(e) NULL)
+    
+    build_results_prompt(mr, dal, br, cr, socio_res, ctx)
+  }
+  
+  # Helper: generează interpretare automată a rezultatelor disponibile
+  .llm_generate <- function() {
+    req(input$file)
+    
+    if (!check_ollama()) {
+      showNotification(
+        paste0("Ollama nu este disponibil la ", LLM_DEFAULT_URL,
+               ". Pornește: ollama serve"),
+        type = "error", duration = 8)
+      return()
+    }
+    
+    nid <- showNotification(tagList(icon("spinner"), " LLM generează interpretarea..."),
+                            type = "message", duration = NULL)
+    on.exit(removeNotification(nid))
+    
+    results_text <- .llm_build_context()
+    user_msg <- paste0(results_text,
+                       "\n\nAnalizează aceste rezultate și explică în limbaj accesibil: ",
+                       "ce disparități există, ce tipuri de bias ar putea indica și ce ",
+                       "limitări trebuie avute în vedere la interpretare.")
+    
+    resp <- call_ollama(messages = list(
+      list(role = "system", content = .LLM_SYSTEM),
+      list(role = "user",   content = user_msg)
+    ))
+    
+    if (!is.null(resp$error)) {
+      showNotification(resp$error, type = "error", duration = 10)
+      return()
+    }
+    
+    llm_history(list(
+      list(role = "user",      content = user_msg),
+      list(role = "assistant", content = resp$text)
+    ))
+  }
+  
+  observeEvent(input$btn_gen_bias,       { .llm_generate() })
+  observeEvent(input$btn_gen_socio,      { .llm_generate() })
+  observeEvent(input$btn_gen_clustering, { .llm_generate() })
+  
+  # Helper: trimite mesaj manual și continuă conversația
+  .llm_send <- function(sfx) {
+    msg_id   <- paste0("llm_msg_", sfx)
+    question <- trimws(isolate(input[[msg_id]]))
+    if (nchar(question) == 0) return()
+    
+    if (!check_ollama()) {
+      showNotification(
+        paste0("Ollama nu este disponibil la ", LLM_DEFAULT_URL,
+               ". Pornește: ollama serve"),
+        type = "error", duration = 8)
+      return()
+    }
+    
+    nid <- showNotification(tagList(icon("spinner"), " LLM procesează..."),
+                            type = "message", duration = NULL)
+    on.exit(removeNotification(nid))
+    
+    hist <- llm_history()
+    
+    # Dacă e prima întrebare (fără 'Generează interpretare' înainte),
+    # atașăm automat contextul cu rezultatele — altfel modelul nu vede datele.
+    send_text <- if (length(hist) == 0)
+      paste0(.llm_build_context(), "\n\nÎNTREBAREA UTILIZATORULUI: ", question)
+    else question
+    
+    messages <- c(list(list(role = "system", content = .LLM_SYSTEM)),
+                  hist,
+                  list(list(role = "user", content = send_text)))
+    
+    resp <- call_ollama(messages)
+    
+    if (!is.null(resp$error)) {
+      showNotification(resp$error, type = "error", duration = 10)
+      return()
+    }
+    
+    llm_history(c(hist,
+                  list(list(role = "user",      content = send_text)),
+                  list(list(role = "assistant", content = resp$text))))
+    updateTextInput(session, msg_id, value = "")
+  }
+  
+  observeEvent(input$btn_send_bias,       { .llm_send("bias") })
+  observeEvent(input$btn_send_socio,      { .llm_send("socio") })
+  observeEvent(input$btn_send_clustering, { .llm_send("clustering") })
 }
 
 shinyApp(ui, server)
