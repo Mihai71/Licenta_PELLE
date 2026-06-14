@@ -396,14 +396,14 @@ ui <- dashboardPage(
               ),
               fluidRow(
                 box(
-                  title = tagList(icon("birthday-cake"), " Vârstă vs Venit — K-Means"),
+                  title = tagList(icon("birthday-cake"), " Vârstă vs Venit: K-Means"),
                   status = "info", solidHeader = TRUE, width = 6,
                   p(style = "color:#666; font-size:12px;",
                     "Fiecare punct = o persoană, colorat după clusterul K-Means. Venit filtrat"),
                   plotly::plotlyOutput("plot_cl_age_income", height = "320px")
                 ),
                 box(
-                  title = tagList(icon("graduation-cap"), " Educație vs Venit — K-Means"),
+                  title = tagList(icon("graduation-cap"), " Educație vs Venit: K-Means"),
                   status = "info", solidHeader = TRUE, width = 6,
                   p(style = "color:#666; font-size:12px;",
                     "Scatter pentru educație numerică; box plot pentru text"),
@@ -412,7 +412,7 @@ ui <- dashboardPage(
               ),
               fluidRow(
                 box(
-                  title = tagList(icon("map-marker-alt"), " Mediu/Origine vs Venit — K-Means"),
+                  title = tagList(icon("map-marker-alt"), " Mediu/Origine vs Venit: K-Means"),
                   status = "info", solidHeader = TRUE, width = 12,
                   p(style = "color:#666; font-size:12px;",
                     "Box plot al venitului pe categorie de mediu sau locul de proveniență"),
@@ -533,9 +533,7 @@ server <- function(input, output, session) {
   cl_color <- function(cid) CL_PALETTE[(as.integer(cid) %% length(CL_PALETTE)) + 1]
   manual_types <- reactiveVal(list())
   
-  # -------------------------------------------------------------------------
-  # Citire date brute + profil
-  # -------------------------------------------------------------------------
+  #citire de date și profil
   
   data_info <- reactive({
     req(input$file)
@@ -568,15 +566,11 @@ server <- function(input, output, session) {
     }
   })
   
-  # -------------------------------------------------------------------------
-  # Date de lucru (editabile de utilizator)
-  # -------------------------------------------------------------------------
+  # datele cu care lucrăm, pe care le putem și edita
   
-  # Stochează datele brute + editările utilizatorului
-  data_working <- reactiveVal(NULL)
   
-  # Resetare la încărcarea unui fișier nou
-  # DUPĂ
+  data_working <- reactiveVal(NULL) #aici le stocăm efectiv (și pe cele brute și eventuale edituri)
+  
   observeEvent(data_raw(), {
     df <- as.data.frame(data_raw())
     df[] <- lapply(df, function(x) {
@@ -594,28 +588,26 @@ server <- function(input, output, session) {
   # Proxy DT pentru actualizări fără re-render complet
   dt_proxy <- DT::dataTableProxy("tbl_data_preview")
   
-  # -------------------------------------------------------------------------
-  # Date procesate (filtrare reactivă non-destructivă)
-  # -------------------------------------------------------------------------
+  # filtrarea
   
   data_processed <- reactive({
     req(data_working())
     df        <- data_working()
     keep_rows <- seq_len(nrow(df))
     
-    # 1. Elimină rânduri cu NA
+    # eliminarea rândurilor cu NA-uri
     if (isTRUE(input$remove_na)) {
       df_chk <- df[keep_rows, !names(df) %in% c(".row_id", ".included"), drop = FALSE]
       keep_rows <- keep_rows[complete.cases(df_chk)]
     }
     
-    # 2. Elimină duplicate
+    # eliminarea de duplicate
     if (isTRUE(input$remove_duplicates)) {
       df_chk <- df[keep_rows, !names(df) %in% c(".row_id", ".included"), drop = FALSE]
       keep_rows <- keep_rows[!duplicated(df_chk)]
     }
     
-    # 3. Filtrare coloană / valoare / specială
+    # filtrul pe coloană
     fc <- if (!is.null(input$filter_col)) input$filter_col else ""
     
     if (fc == "__missing__") {
@@ -666,13 +658,11 @@ server <- function(input, output, session) {
     attr(result, "original_rows") <- keep_rows
     result
   })
-  
-  # data_final: aplică gruparea vârstă peste data_processed (socio + vizualizare)
   data_final <- reactive({
     req(data_processed())
     df <- data_processed()
     
-    age_col <- names(df)[str_detect(tolower(names(df)), "v[âa]rst[ăa]|^age$|\\bage\\b")]
+    age_col <- names(df)[str_detect(tolower(names(df)), "v[âa]rst[ăa]|agea|\\bage\\b")]
     if (length(age_col) > 0) {
       df <- df %>%
         mutate(across(all_of(age_col[1]), ~ suppressWarnings(
@@ -682,7 +672,7 @@ server <- function(input, output, session) {
     df
   })
   
-  # Fișier CSV temporar al datelor procesate → transmis funcțiilor Python
+  # fișier CSV temporar cu datele, transmis către Python
   temp_fp <- reactive({
     req(data_processed())
     df <- data_processed()
@@ -700,15 +690,11 @@ server <- function(input, output, session) {
     df[, !names(df) %in% c(".included", ".row_id"), drop = FALSE]
   })
   
-  # -------------------------------------------------------------------------
-  # Editare celule în tabel
-  # -------------------------------------------------------------------------
+  # editarea de celule în tabel
   
   observeEvent(input$tbl_data_preview_cell_edit, {
     info     <- input$tbl_data_preview_cell_edit
     df_work  <- data_working()
-    
-    # Mapăm rândul vizibil → rândul original din data_working
     df_proc   <- isolate(data_processed())
     orig_rows <- attr(df_proc, "original_rows")
     
@@ -718,7 +704,7 @@ server <- function(input, output, session) {
       info$row
     }
     
-    col_idx <- info$col + 1  # DT e 0-indexed pe coloane
+    col_idx <- info$col + 1  
     
     new_val <- tryCatch(
       DT::coerceValue(info$value, df_work[orig_row, col_idx]),
@@ -726,8 +712,6 @@ server <- function(input, output, session) {
     )
     df_work[orig_row, col_idx] <- new_val
     data_working(df_work)
-    
-    # Actualizăm tabelul fără re-render
     DT::replaceData(dt_proxy, data_final(), resetPaging = FALSE, rownames = FALSE)
   })
   
@@ -752,9 +736,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # -------------------------------------------------------------------------
-  # Override tip coloană + actualizare selectori
-  # -------------------------------------------------------------------------
+  # override la tipurile de coloane
   
   observeEvent(input$apply_override, {
     req(input$override_col, input$override_type)
@@ -814,9 +796,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "override_col",     choices = cols$all)
     updateSelectInput(session, "socio_target_col", choices = cols$fin)
   }, ignoreInit = TRUE)
-  # -------------------------------------------------------------------------
-  # UI: Sumar fișier
-  # -------------------------------------------------------------------------
+  # rezumatul fișierului în UI
   
   output$ui_file_summary <- renderUI({
     req(data_info(), data_processed())
@@ -840,9 +820,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # -------------------------------------------------------------------------
-  # UI: Info duplicate
-  # -------------------------------------------------------------------------
+  # informații despre duplicate în UI
   
   output$ui_dup_info <- renderUI({
     req(data_working())
@@ -859,13 +837,11 @@ server <- function(input, output, session) {
     }
   })
   
-  # -------------------------------------------------------------------------
-  # UI: Filtru valoare (dinamic după tipul coloanei)
-  # -------------------------------------------------------------------------
+  # valoarea filtrului în funcție de tipul coloanei
   
   output$ui_filter_value <- renderUI({
     req(input$filter_col, input$file)
-    data_info()  # se reface la fișier nou sau override tip, dar NU la editare celulă
+    data_info()  
     if (input$filter_col %in% c("", "__missing__", "__duplicates__")) return(NULL)
     
     df  <- isolate(data_working())
@@ -898,9 +874,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # -------------------------------------------------------------------------
-  # UI: Status preprocesare
-  # -------------------------------------------------------------------------
+  # statusul preprocesării (UI)
   
   output$ui_preprocess_status <- renderUI({
     req(data_working())
@@ -923,9 +897,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # -------------------------------------------------------------------------
-  # UI: Tipuri coloane + Alerte valori lipsă
-  # -------------------------------------------------------------------------
+  # tipurile coloanelor și alertele valorilor lipsă
   
   output$tbl_col_types <- renderDT({
     req(data_info())
@@ -960,9 +932,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # -------------------------------------------------------------------------
-  # Tabel editabil
-  # -------------------------------------------------------------------------
+  # tabel editabil
   
   output$tbl_data_preview <- renderDT({
     req(data_final())
@@ -1006,9 +976,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # -------------------------------------------------------------------------
-  # Download date procesate
-  # -------------------------------------------------------------------------
+  # descărcarea datelor procesate
   
   output$dl_data_csv <- downloadHandler(
     filename = function() paste0("date_procesate_", Sys.Date(), ".csv"),
@@ -1018,9 +986,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # -------------------------------------------------------------------------
-  # Calcul metrici (FR-04) – folosește datele procesate via temp_fp()
-  # -------------------------------------------------------------------------
+  # calculul metricilor preprocesate
   
   metrics_result <- eventReactive(input$run, {
     req(data_info(), input$sensitive, input$target, temp_fp())
@@ -1030,11 +996,11 @@ server <- function(input, output, session) {
     s_type <- info$types[[input$sensitive]]
     
     if (!(s_type %in% c("Categorica", "Binara"))) {
-      showNotification("Atributul sensibil trebuie să fie Categorică sau Binară.", type = "error")
+      showNotification("Atributul sensibil trebuie să fie categoric sau binar.", type = "error")
       return(NULL)
     }
     if (!(t_type %in% c("Numerica", "Binara"))) {
-      showNotification("Target-ul trebuie să fie Numeric sau Binar.", type = "error")
+      showNotification("Target-ul trebuie să fie numeric sau binar.", type = "error")
       return(NULL)
     }
     
@@ -1075,9 +1041,7 @@ server <- function(input, output, session) {
     py_to_r_safe(compute_bias_score(effect, grp_props))
   })
   
-  # -------------------------------------------------------------------------
-  # UI: Bias score, alerte, metrici
-  # -------------------------------------------------------------------------
+  # bias score, metrici, alerte (pt UI)
   
   output$ui_bias_score <- renderUI({
     req(bias_result())
@@ -1119,8 +1083,8 @@ server <- function(input, output, session) {
                             strong(if (is_serious) " SUBREPREZENTARE SERIOASĂ: " else " SUBREPREZENTARE MODERATĂ: "),
                             paste0("Grupul '", item$group, "' reprezintă doar ",
                                    round(item$pct, 1), "% din date ",
-                                   if (is_serious) "(sub 0,5/k — mai puțin de jumătate din cota echitabilă)."
-                                   else "(sub 0,75/k — sub 75% din cota echitabilă)."))
+                                   if (is_serious) "(sub 0,5/k: mai puțin de jumătate din cota echitabilă)."
+                                   else "(sub 0,75/k: sub 75% din cota echitabilă)."))
       )
     }
     
@@ -1226,9 +1190,7 @@ server <- function(input, output, session) {
       }
     }
   )
-  # -------------------------------------------------------------------------
-  # TAB SOCIO-DEMOGRAFIC (FR-03)
-  # -------------------------------------------------------------------------
+  # Tabul sociodemografic
   
   socio_result <- eventReactive(input$run_socio, {
     req(data_final(), input$socio_type, input$socio_target_col)
@@ -1239,14 +1201,14 @@ server <- function(input, output, session) {
     df[[tcol]] <- suppressWarnings(as.numeric(df[[tcol]]))
     
     group_col <- if (type == "age") {
-      age_col <- names(df)[str_detect(tolower(names(df)), "v[âa]rst[ăa]|^age$")]
+      age_col <- names(df)[str_detect(tolower(names(df)), "v[âa]rst[ăa]|agea|^age$")]
       if (length(age_col) == 0) {
         showNotification("Nu s-a detectat o coloană de vârstă.", type = "warning")
         return(NULL)
       }
       age_col[1]
     } else if (type == "edu") {
-      edu_col <- names(df)[str_detect(tolower(names(df)), "educa|studi")]
+      edu_col <- names(df)[str_detect(tolower(names(df)), "educa|studi|eisced")]
       if (length(edu_col) == 0) {
         showNotification("Nu s-a detectat o coloană de educație.", type = "warning")
         return(NULL)
@@ -1254,7 +1216,7 @@ server <- function(input, output, session) {
       df[[edu_col[1]]] <- classify_education(df[[edu_col[1]]])
       edu_col[1]
     } else {
-      reg_col <- names(df)[str_detect(tolower(names(df)), "regiu|jude[tț]|nuts|localit|zona")]
+      reg_col <- names(df)[str_detect(tolower(names(df)), "regiu|jude[tț]|nuts|localit|zona|domicil")]
       if (length(reg_col) == 0) {
         showNotification("Nu s-a detectat o coloană de regiune/județ.", type = "warning")
         return(NULL)
@@ -1330,6 +1292,7 @@ server <- function(input, output, session) {
       div(style = "font-size:11px; color:#888; line-height:1.4;",
           icon("info-circle"), " ",
           tags$b("Notă metodologică:"), tags$br(),
+          "Valoarea trasmisă ca parametru financiar se presupune a fi o sumă de bani în RON! Vă rugăm testați doar cu astfel de date",tags$br(),
           "Valorile de referință sunt exprimate în RON, convertite din EUR",
           " la cursul de 1 EUR = 5,2 RON (mai 2026).", tags$br(),
           "România: salariu mediu ", tags$b("net"), " (sursa INS 2023).", tags$br(),
@@ -1688,7 +1651,7 @@ server <- function(input, output, session) {
     pca  <- as.data.frame(res$pca_data, check.names = FALSE)
     n_cl <- as.integer(res$n_clusters)
     
-    # Culori cu nume — cluster "0" → prima culoare, etc.
+    # Culori cu nume: cluster "0" → prima culoare, etc.
     named_colors <- setNames(CL_PALETTE[1:n_cl], as.character(0:(n_cl - 1)))
     pca$cluster  <- as.character(pca[["_cluster"]])
     
@@ -1870,7 +1833,7 @@ server <- function(input, output, session) {
                                                   " border-radius:50%; background:", cl_color(cid),
                                                   "; margin-right:6px;")),
                          tags$span(style = paste0("color:", color),
-                                   paste0("Cluster ", cid, " — ", sev))
+                                   paste0("Cluster ", cid, " : ", sev))
                  ),
                  tags$p(style = paste0("font-size:1.8em; font-weight:bold; color:", color,
                                        "; text-align:center; margin:4px 0;"),
@@ -1940,8 +1903,8 @@ server <- function(input, output, session) {
                      "<br>Vârstă: ", round(age_v, 0),
                      "<br>Venit: ",  round(inc_v, 2))
     ) %>% plotly::layout(
-      xaxis  = list(title = paste("Vârstă —", age_col)),
-      yaxis  = list(title = paste("Venit —", income_col)),
+      xaxis  = list(title = paste("Vârstă: ", age_col)),
+      yaxis  = list(title = paste("Venit: ", income_col)),
       legend = list(title = list(text = "Cluster"))
     )
   })
@@ -1978,8 +1941,8 @@ server <- function(input, output, session) {
         hoverinfo = "text",
         text = ~paste0("Cluster: ", cluster, "<br>Edu: ", edu_num, "<br>Venit: ", round(inc_v, 2))
       ) %>% plotly::layout(
-        xaxis  = list(title = paste("Educație —", edu_col)),
-        yaxis  = list(title = paste("Venit —", income_col)),
+        xaxis  = list(title = paste("Educație: ", edu_col)),
+        yaxis  = list(title = paste("Venit: ", income_col)),
         legend = list(title = list(text = "Cluster"))
       )
     } else {
@@ -1988,8 +1951,8 @@ server <- function(input, output, session) {
         data = df_plot, x = ~edu_str, y = ~inc_v,
         color = ~cluster, colors = named_colors, type = "box"
       ) %>% plotly::layout(
-        xaxis   = list(title = paste("Educație —", edu_col)),
-        yaxis   = list(title = paste("Venit —", income_col)),
+        xaxis   = list(title = paste("Educație: ", edu_col)),
+        yaxis   = list(title = paste("Venit: ", income_col)),
         boxmode = "group",
         legend  = list(title = list(text = "Cluster"))
       )
@@ -2022,8 +1985,8 @@ server <- function(input, output, session) {
       data = df_plot, x = ~env_v, y = ~inc_v,
       color = ~cluster, colors = named_colors, type = "box"
     ) %>% plotly::layout(
-      xaxis   = list(title = paste("Mediu/Origine —", env_col)),
-      yaxis   = list(title = paste("Venit —", income_col)),
+      xaxis   = list(title = paste("Mediu/Origine: ", env_col)),
+      yaxis   = list(title = paste("Venit: ", income_col)),
       boxmode = "group",
       legend  = list(title = list(text = "Cluster"))
     )
@@ -2189,11 +2152,11 @@ server <- function(input, output, session) {
       nm_low <- tolower(cols)
       warns  <- character(0)
       if (!any(grepl("v[âa]rst|agea|\\bage\\b", nm_low)))
-        warns <- c(warns, "Nu s-a detectat o coloană de vârstă — analizele pe grupe de vârstă pot lipsi sau pot fi eronate.")
+        warns <- c(warns, "Nu s-a detectat o coloană de vârstă: analizele pe grupe de vârstă pot lipsi sau pot fi eronate.")
       if (!any(grepl("educa|studi|eisced|isced|\\bedu", nm_low)))
-        warns <- c(warns, "Nu s-a detectat o coloană de educație — analizele pe nivel de educație pot lipsi sau pot fi eronate.")
+        warns <- c(warns, "Nu s-a detectat o coloană de educație: analizele pe nivel de educație pot lipsi sau pot fi eronate.")
       if (!any(grepl("regiu|jude|nuts|localit|zona|domicil|cntry|country|mediu", nm_low)))
-        warns <- c(warns, "Nu s-a detectat o coloană de regiune/mediu — analizele regionale pot lipsi sau pot fi eronate.")
+        warns <- c(warns, "Nu s-a detectat o coloană de regiune/mediu: analizele regionale pot lipsi sau pot fi eronate.")
       
       tgt <- input$target
       if (!is.null(tgt) && nzchar(tgt) && tgt %in% cols) {
@@ -2202,14 +2165,14 @@ server <- function(input, output, session) {
           v <- suppressWarnings(as.numeric(as.character(df[[tgt]])))
           pct_bad <- round(mean(is.na(v)) * 100, 1)
           if (pct_bad > 20)
-            warns <- c(warns, sprintf("Coloana țintă '%s' are %.1f%% valori lipsă sau non-numerice — rezultatele pot fi distorsionate.", tgt, pct_bad))
+            warns <- c(warns, sprintf("Coloana țintă '%s' are %.1f%% valori lipsă sau non-numerice: rezultatele pot fi distorsionate.", tgt, pct_bad))
         }
       }
       
       if (!is.null(socio_res)) {
         stc <- tolower(if (is.null(socio_res$target_col)) "" else socio_res$target_col)
         if (!grepl("sal|venit|income|wage|earn|hinct|pay", stc))
-          warns <- c(warns, sprintf("Indicatorul socio-demografic '%s' nu pare monetar — comparația cu referințele salariale în RON poate să nu aibă sens.", socio_res$target_col))
+          warns <- c(warns, sprintf("Indicatorul socio-demografic '%s' nu pare monetar: comparația cu referințele salariale în RON poate să nu aibă sens.", socio_res$target_col))
       }
       
       sens <- input$sensitive
@@ -2290,7 +2253,7 @@ server <- function(input, output, session) {
     hist <- llm_history()
     
     # Dacă e prima întrebare (fără 'Generează interpretare' înainte),
-    # atașăm automat contextul cu rezultatele — altfel modelul nu vede datele.
+    # atașăm automat contextul cu rezultatele: altfel modelul nu vede datele.
     send_text <- if (length(hist) == 0)
       paste0(.llm_build_context(), "\n\nÎNTREBAREA UTILIZATORULUI: ", question)
     else question
