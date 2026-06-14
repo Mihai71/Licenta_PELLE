@@ -131,13 +131,19 @@ def compute_group_imbalance(file_path, col):
     except Exception as e:
         return []
 
-    counts = df[col].value_counts(normalize=True)
+        counts = df[col].value_counts(normalize=True)
     k = len(counts)
-    thr = 0.5 / k if k > 0 else 0.20
+    if k == 0:
+        return []
+    thr_serious  = 0.5  / k
+    thr_moderate = 0.75 / k
     alerts = []
     for group, pct in counts.items():
-      if float(pct) < thr:
-        alerts.append({"group": str(group), "pct": round(float(pct * 100), 2)})
+        p = float(pct)
+        if p < thr_serious:
+            alerts.append({"group": str(group), "pct": round(p * 100, 2), "severity": "serious"})
+        elif p < thr_moderate:
+            alerts.append({"group": str(group), "pct": round(p * 100, 2), "severity": "moderate"})
     return alerts
 
 
@@ -267,7 +273,7 @@ def compute_bias_score(effect_size, group_proportions_list):
     imbalance_penalty = 0.0
     if props:
       k = len(props)
-      thr = 0.5 / k if k > 0 else 0.20
+      thr = 0.75 / k if k > 0 else 1.0
       min_prop = min(props)
       if min_prop < thr:
           imbalance_penalty = (thr - min_prop) / thr

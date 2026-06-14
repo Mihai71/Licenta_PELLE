@@ -59,7 +59,7 @@ llm_box_ui <- function(sfx) {
     conditionalPanel(
       condition = "output.file_loaded",
       box(
-        title       = tagList(icon("robot"), " Interpretare AI (Ollama)"),
+        title       = tagList(icon("robot"), " Interpretare AI"),
         status      = "info", solidHeader = TRUE, width = 12,
         collapsible = TRUE, collapsed = FALSE,
         div(
@@ -92,9 +92,8 @@ llm_box_ui <- function(sfx) {
     )
   )
 }
-# ---------------------------------------------------------------------------
-# UI
-# ---------------------------------------------------------------------------
+
+# USER INTERFACE (UI)
 
 ui <- dashboardPage(
   skin = "blue",
@@ -117,7 +116,7 @@ ui <- dashboardPage(
               placeholder = "Niciun fișier selectat"),
     
     selectInput("sensitive", "Atribut sensibil", choices = NULL),
-    selectInput("target",    "Variabilă analizată (target)", choices = NULL),
+    selectInput("target",    "Variabilă analizată (țintă)", choices = NULL),
     
     tags$details(
       tags$summary(style = "color:#aaa; cursor:pointer; font-size:12px;",
@@ -170,18 +169,17 @@ ui <- dashboardPage(
     ")),
     tabItems(
       
-      # -----------------------------------------------------------------------
-      # TAB DATE
-      # -----------------------------------------------------------------------
+      # TABUL DE DATE (primul din listă)
+      
       tabItem(tabName = "tab_data",
-              # --- Grafice interpretabile K-Means (Vârsta/Edu/Mediu vs Venit) ---
+              # Grafice interpretabile K-Means (Vârsta/Educație/Mediu vs Venit)
               fluidRow(
                 box(title = "Sumar fișier", status = "primary", solidHeader = TRUE, width = 12,
                     uiOutput("ui_file_summary")
                 )
               ),
               
-              # --- PREPROCESARE ---
+              #PREPROCESARE
               fluidRow(
                 box(
                   title = tagList(icon("tools"), " Preprocesare Date"),
@@ -189,7 +187,7 @@ ui <- dashboardPage(
                   
                   fluidRow(
                     
-                    # Coloana 1 – curățare
+                    # curățare
                     column(4,
                            tags$b(icon("eraser"), " Curățare"),
                            tags$br(), tags$br(),
@@ -203,7 +201,7 @@ ui <- dashboardPage(
                                          value = FALSE)
                     ),
                     
-                    # Coloana 2 – filtrare
+                    # filtrare
                     column(5,
                            tags$b(icon("filter"), " Filtrare suplimentară"),
                            tags$br(), tags$br(),
@@ -218,7 +216,7 @@ ui <- dashboardPage(
                            uiOutput("ui_filter_value")
                     ),
                     
-                    # Coloana 3 – status
+                    # status
                     column(3,
                            tags$b(icon("info-circle"), " Status date"),
                            tags$br(), tags$br(),
@@ -229,11 +227,11 @@ ui <- dashboardPage(
               ),
               
               fluidRow(
-                box(title = "Tipurile detectate per coloană (FR-01)",
+                box(title = "Tipurile detectate per coloană",
                     status = "info", solidHeader = TRUE, width = 6,
                     DTOutput("tbl_col_types")
                 ),
-                box(title = "Alerte calitate date – Valori lipsă (FR-05)",
+                box(title = "Alerte calitate date, valori lipsă",
                     status = "warning", solidHeader = TRUE, width = 6,
                     uiOutput("ui_missing_alerts")
                 )
@@ -256,22 +254,20 @@ ui <- dashboardPage(
               )
       ),
       
-      # -----------------------------------------------------------------------
-      # TAB ANALIZĂ GENERALĂ
-      # -----------------------------------------------------------------------
+      # Tabul de analiză generală (al doilea)
       tabItem(tabName = "tab_bias",
               fluidRow(
-                box(title = "Bias Score (FR-06)",
+                box(title = "Bias Score",
                     status = "primary", solidHeader = TRUE, width = 4,
                     uiOutput("ui_bias_score")
                 ),
-                box(title = "Alerte Distribuționale (FR-05)",
+                box(title = "Alerte Distribuționale",
                     status = "warning", solidHeader = TRUE, width = 8,
                     uiOutput("ui_dist_alerts")
                 )
               ),
               fluidRow(
-                box(title = "Metrici de Disparitate (FR-04)",
+                box(title = "Metrici de Disparitate",
                     status = "info", solidHeader = TRUE, width = 12,
                     uiOutput("ui_metrics_detail")
                 )
@@ -290,9 +286,7 @@ ui <- dashboardPage(
               llm_box_ui("bias")
       ),
       
-      # -----------------------------------------------------------------------
-      # TAB SOCIO-DEMOGRAFIC
-      # -----------------------------------------------------------------------
+      # Tabul socio-demografic (al treilea)
       tabItem(tabName = "tab_socio",
               fluidRow(
                 box(title = "Configurare Analiză Socio-Demografică",
@@ -331,7 +325,7 @@ ui <- dashboardPage(
                 )
               ),
               fluidRow(
-                box(title = "Tabel detaliat – Analiză Socio-Demografică",
+                box(title = "Tabel detaliat al analizei socio-demografice",
                     status = "primary", solidHeader = TRUE, width = 12,
                     div(class = "table-toolbar",
                         downloadButton("dl_socio_csv",
@@ -344,34 +338,30 @@ ui <- dashboardPage(
               llm_box_ui("socio")
       ),
       
-      # -----------------------------------------------------------------------
-      # TAB VIZUALIZARE
-      # -----------------------------------------------------------------------
+      # tabul de vizualizare a graficelor (al patrulea)
       tabItem(tabName = "tab_viz",
               fluidRow(
                 tabBox(title = "Grafice", width = 12,
                        tabPanel("Boxplot",
-                                p("Distribuția valorilor numerice pe grupuri (FR-07)"),
+                                p("Distribuția valorilor numerice pe grupuri"),
                                 chart_output("plot_boxplot")
                        ),
                        tabPanel("Density Plot",
-                                p("Suprapunerea distribuțiilor per grup (FR-07)"),
+                                p("Suprapunerea distribuțiilor per grup"),
                                 chart_output("plot_density")
                        ),
                        tabPanel("Barplot Diferențe",
-                                p("Diferențele mediei față de media globală (FR-07)"),
+                                p("Diferențele mediei față de media globală"),
                                 chart_output("plot_barplot")
                        ),
                        tabPanel("Proporții (target binar)",
-                                p("Proporția outcome-ului pozitiv pe grupuri (FR-07)"),
+                                p("Proporția outcome-ului pozitiv pe grupuri"),
                                 chart_output("plot_parity")
                        )
                 )
               )
       ),
-      # -----------------------------------------------------------------------
-      # TAB CLUSTERE ML
-      # -----------------------------------------------------------------------
+      # Tabul de clustering și ML (al cincilea)
       tabItem(tabName = "tab_clustering",
               
               fluidRow(
@@ -379,32 +369,27 @@ ui <- dashboardPage(
                     status = "primary", solidHeader = TRUE, width = 12,
                     p(style = "color:#666; font-size:13px;",
                       "Selectează coloanele din setul de date încărcat care corespund fiecărui rol semantic. 
-                 Sistemul detectează automat scalele (numerice sau text/țări)."),
+                 "),
                     fluidRow(
                       column(2,
-                             selectInput("cl_col_sex",    "Sex *",              choices = NULL),
-                             tags$small(class="text-muted", "Ex: gndr, sex, gender")
+                             selectInput("cl_col_sex",    "Sex *",              choices = NULL)
                       ),
                       column(2,
-                             selectInput("cl_col_age",    "Vârstă *",           choices = NULL),
-                             tags$small(class="text-muted", "Ex: agea, varsta, age")
+                             selectInput("cl_col_age",    "Vârstă *",           choices = NULL)
                       ),
                       column(2,
-                             selectInput("cl_col_edu",    "Educație *",         choices = NULL),
-                             tags$small(class="text-muted", "Ex: eisced, edu, nivel_edu")
+                             selectInput("cl_col_edu",    "Educație *",         choices = NULL)
                       ),
                       column(2,
-                             selectInput("cl_col_env",    "Mediu / Origine *",  choices = NULL),
-                             tags$small(class="text-muted", "Ex: domicil, cntry, tara, oras")
+                             selectInput("cl_col_env",    "Mediu / Origine *",  choices = NULL)
                       ),
                       column(2,
-                             selectInput("cl_col_income", "Indicator Financiar *", choices = NULL),
-                             tags$small(class="text-muted", "Ex: hinctnta, salariu, venit")
+                             selectInput("cl_col_income", "Indicator Financiar *", choices = NULL)
                       ),
                       column(2,
                              selectInput("cl_col_extra",  "Coloane Adiționale",
                                          choices = NULL, multiple = TRUE),
-                             tags$small(class="text-muted", "Opțional: health, happy, pdwrk etc.")
+                             tags$small(class="text-muted", "Opțional, adăugați coloane adiționale")
                       )
                     )
                 )
@@ -414,14 +399,14 @@ ui <- dashboardPage(
                   title = tagList(icon("birthday-cake"), " Vârstă vs Venit — K-Means"),
                   status = "info", solidHeader = TRUE, width = 6,
                   p(style = "color:#666; font-size:12px;",
-                    "Fiecare punct = o persoană, colorat după clusterul K-Means. Venit filtrat p2–p98."),
+                    "Fiecare punct = o persoană, colorat după clusterul K-Means. Venit filtrat"),
                   plotly::plotlyOutput("plot_cl_age_income", height = "320px")
                 ),
                 box(
                   title = tagList(icon("graduation-cap"), " Educație vs Venit — K-Means"),
                   status = "info", solidHeader = TRUE, width = 6,
                   p(style = "color:#666; font-size:12px;",
-                    "Scatter pentru educație numerică; box plot pentru text (Liceu / Master etc.)."),
+                    "Scatter pentru educație numerică; box plot pentru text"),
                   plotly::plotlyOutput("plot_cl_edu_income", height = "320px")
                 )
               ),
@@ -430,7 +415,7 @@ ui <- dashboardPage(
                   title = tagList(icon("map-marker-alt"), " Mediu/Origine vs Venit — K-Means"),
                   status = "info", solidHeader = TRUE, width = 12,
                   p(style = "color:#666; font-size:12px;",
-                    "Box plot al venitului pe categorie de mediu/țară, colorat după cluster."),
+                    "Box plot al venitului pe categorie de mediu sau locul de proveniență"),
                   plotly::plotlyOutput("plot_cl_env_income", height = "320px")
                 )
               ),
@@ -462,10 +447,7 @@ ui <- dashboardPage(
                              tags$br(), tags$br(),
                              actionButton("run_elbow",
                                           tagList(icon("search"), " Calculează sugestie k"),
-                                          class = "btn-info btn-sm"),
-                             tags$br(),
-                             tags$small(class = "text-muted",
-                                        "Rulează rapid pe un eșantion din date (câteva secunde).")
+                                          class = "btn-info btn-sm")
                       ),
                       column(8,
                              uiOutput("ui_elbow_suggestion"),
@@ -515,9 +497,8 @@ ui <- dashboardPage(
               ),
               llm_box_ui("clustering")
       ),
-      # -----------------------------------------------------------------------
-      # TAB EXPORT
-      # -----------------------------------------------------------------------
+      # Tabul de export (al șaselea)
+      
       tabItem(tabName = "tab_export",
               fluidRow(
                 box(title = "Export rezultate",
@@ -544,12 +525,9 @@ ui <- dashboardPage(
 )
 
 
-# ---------------------------------------------------------------------------
-# SERVER
-# ---------------------------------------------------------------------------
+# Server
 
 server <- function(input, output, session) {
-  # Paletă comună clustere — aceeași culoare peste tot
   CL_PALETTE <- c("#3498db","#e74c3c","#2ecc71","#f39c12",
                   "#9b59b6","#1abc9c","#e67e22","#34495e")
   cl_color <- function(cid) CL_PALETTE[(as.integer(cid) %% length(CL_PALETTE)) + 1]
@@ -1134,11 +1112,15 @@ server <- function(input, output, session) {
     alerts <- tagList()
     
     for (item in dal$imbalance) {
+      is_serious <- !is.null(item$severity) && item$severity == "serious"
       alerts <- tagList(alerts,
-                        div(class = "alert-box alert-red",
-                            icon("exclamation-triangle"), strong(" ALERTĂ CRITICĂ: "),
+                        div(class = if (is_serious) "alert-box alert-red" else "alert-box alert-orange",
+                            icon(if (is_serious) "exclamation-triangle" else "exclamation-circle"),
+                            strong(if (is_serious) " SUBREPREZENTARE SERIOASĂ: " else " SUBREPREZENTARE MODERATĂ: "),
                             paste0("Grupul '", item$group, "' reprezintă doar ",
-                                   round(item$pct, 1), "% din date (sub pragul dinamic de 0,5/k)."))
+                                   round(item$pct, 1), "% din date ",
+                                   if (is_serious) "(sub 0,5/k — mai puțin de jumătate din cota echitabilă)."
+                                   else "(sub 0,75/k — sub 75% din cota echitabilă)."))
       )
     }
     

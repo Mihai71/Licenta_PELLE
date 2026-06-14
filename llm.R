@@ -14,14 +14,15 @@ LLM_DEFAULT_URL   <- "http://localhost:11434"
   "SPD: |SPD|<0.1=echitabil | >=0.1=inechitabil\n",
   "DI: 0.8-1.25=echitabil | <0.8=risc discriminare | >1.25=favorizare inversă\n",
   "Bias Score: <0.20=neglijabil | 0.20-0.50=moderat | >=0.50=ridicat\n",
-  "Reprezentare: un grup e subreprezent dacă are sub 0.5/k din total (k=nr. grupuri)\n\n",
+  "Reprezentare: moderat subreprezent = sub 0.75/k | serios subreprezent = sub 0.5/k (k=nr. grupuri)\n\n",
   
   "PROCESUL TĂU DE ANALIZĂ — parcurge fiecare tip în ordine:\n\n",
   
   "1. BIAS DE REPREZENTARE\n",
-  "   Semnal: există grupuri marcate ca subreprezentate în alerte? ",
-  "   Grupul subreprezent are și medii mai mici la target? ",
-  "   Dacă un grup mic are și rezultate mai proaste, subreprezentarea amplifică biasul.\n\n",
+  "   Semnal: există grupuri marcate ca 'subreprezentare serioasă' (sub 0.5/k) ",
+  "   sau 'subreprezentare moderată' (sub 0.75/k) în alerte? ",
+  "   Un grup serios subreprezent are mai puțin de jumătate din cota echitabilă. ",
+  "   Dacă grupul mic are și medii mai mici la target, subreprezentarea amplifică biasul.\n\n",
   
   "2. BIAS DE PROXY\n",
   "   Semnal: clusterele K-Means (care NU au folosit atributul sensibil ca feature) ",
@@ -108,9 +109,18 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
                                  sk$outliers_count, as.numeric(sk$outliers_pct)))
     imb <- dal$imbalance
     if (!is.null(imb) && length(imb) > 0) {
-      grps <- sapply(imb, function(x) sprintf("%s (%.1f%%)", x$group, as.numeric(x$pct)))
-      out  <- paste0(out, "Grupuri subreprezentate (sub pragul dinamic 0,5/k): ",
-                     paste(grps, collapse = ", "), "\n")
+      serious  <- Filter(function(x) !is.null(x$severity) && x$severity == "serious",  imb)
+      moderate <- Filter(function(x) !is.null(x$severity) && x$severity == "moderate", imb)
+      if (length(serious) > 0) {
+        grps <- sapply(serious, function(x) sprintf("%s (%.1f%%)", x$group, as.numeric(x$pct)))
+        out  <- paste0(out, "Subreprezentare SERIOASĂ (sub 0,5/k — sub jumătate din cota echitabilă): ",
+                       paste(grps, collapse = ", "), "\n")
+      }
+      if (length(moderate) > 0) {
+        grps <- sapply(moderate, function(x) sprintf("%s (%.1f%%)", x$group, as.numeric(x$pct)))
+        out  <- paste0(out, "Subreprezentare moderată (sub 0,75/k): ",
+                       paste(grps, collapse = ", "), "\n")
+      }
     }
   }
   
