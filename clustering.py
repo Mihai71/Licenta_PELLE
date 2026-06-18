@@ -423,12 +423,10 @@ def run_clustering(file_path, col_sex, col_age, col_edu, col_env,
         valid_mask = X_full.notna().all(axis=1)
         X_clean  = X_full[valid_mask].values.astype(float)
         df_clean = df[valid_mask].copy()
-
-        # Subsample pentru date mari — păstrează reprezentativitatea
-        if len(X_clean) > 15000:
-            idx      = np.random.RandomState(42).choice(len(X_clean), 15000, replace=False)
-            X_clean  = X_clean[idx]
-            df_clean = df_clean.iloc[idx].copy()
+        #if len(X_clean) > 15000:
+        #    idx      = np.random.RandomState(42).choice(len(X_clean), 15000, replace=False)
+        #    X_clean  = X_clean[idx]
+        #    df_clean = df_clean.iloc[idx].copy()
 
         if len(X_clean) < n_clusters * 2:
             return {"error": "Date insuficiente pentru clustering."}

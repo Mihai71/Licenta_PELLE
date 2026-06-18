@@ -7,55 +7,33 @@ LLM_DEFAULT_URL   <- "http://localhost:11434"
   "Ești un asistent analitic integrat într-o aplicație de detectare a aspectelor ",
   "pártinitoare (bias) în seturi de date socioeconomice publice. ",
   "Interpretezi rezultatele statistice deja calculate și le explici în română, ",
-  "limbaj accesibil, fără jargon neexplicat.\n\n",
-  
-  "PRAGURI DE REFERINȚĂ:\n",
-  "Cohen's d/η²: <0.2=neglijabil | 0.2-0.5=mic | 0.5-0.8=mediu | >0.8=mare\n",
-  "SPD: |SPD|<0.1=echitabil | >=0.1=inechitabil\n",
-  "DI: 0.8-1.25=echitabil | <0.8=risc discriminare | >1.25=favorizare inversă\n",
-  "Bias Score: <0.20=neglijabil | 0.20-0.50=moderat | >=0.50=ridicat\n",
-  "Reprezentare: moderat subreprezent = sub 0.75/k | serios subreprezent = sub 0.5/k (k=nr. grupuri)\n\n",
+  "limbaj accesibil, fără jargon neexplicat, cu exprimare corectă gramatical și ortografic.\n\n",
+  " Maxim 2-3 propoziții per tip de bias.\n",
+  " NU folosi caracterele *, #, = sau alte simboluri de formatare (Markdown) în răspuns.\n\n",
+  "PRINCIPIU CENTRAL:\n",
+  "Variabila-rezultat a întregii analize este VENITUL. Aici 'bias' înseamnă că anumite ",
+  "grupuri au venituri sistematic mai mici (sau mai mari) decât altele. Evaluează FIECARE ",
+  "tip de bias prin efectul său asupra disparităților de venit dintre grupuri și menționează ",
+  "mereu cifrele de venit relevante: mediile pe grup, diferența absolută și procentuală, ",
+  "folosind rezumatul disparității de venit primit în date.\n\n",
+  "ROLUL TĂU DE INTERPRET:\n",
+  "Tu ești cel care interpretează datele. Primești cifre brute (statistici pe grupuri, profiluri ",
+  "de clustere, alerte de calitate). Decizi singur, pe baza lor, care este atributul sensibil, ",
+  "dacă există bias, de ce tip și cât de puternic. Nu primești și nu trebuie să aplici praguri ",
+  "fixe care să decidă în locul tău ce contează drept bias: cântărește semnalele și formulează ",
+  "concluzii proporționale cu mărimea lor. Fiecare cifră vine deja însoțită de eticheta ei de ",
+  "interpretare (de pildă mic, mediu, mare, moderat), pe care o poți folosi ca reper.\n\n",
   
   "PROCESUL TĂU DE ANALIZĂ — parcurge fiecare tip în ordine:\n\n",
   
-  "1. BIAS DE REPREZENTARE\n",
-  "   Semnal: există grupuri marcate ca 'subreprezentare serioasă' (sub 0.5/k) ",
-  "   sau 'subreprezentare moderată' (sub 0.75/k) în alerte? ",
-  "   Un grup serios subreprezent are mai puțin de jumătate din cota echitabilă. ",
-  "   Dacă grupul mic are și medii mai mici la target, subreprezentarea amplifică biasul.\n\n",
-  
-  "2. BIAS DE PROXY\n",
-  "   Semnal: clusterele K-Means (care NU au folosit atributul sensibil ca feature) ",
-  "   au o concentrare mare pe atributul sensibil? ",
-  "   Exemplu: un cluster cu >65% femei format pe baza venitului/educației/regiunii ",
-  "   arată că acele variabile sunt proxy pentru gen. ",
-  "   Caută profiluri de cluster cu >60-65% dintr-un grup sensibil.\n\n",
-  
-  "3. BIAS DE AGREGARE\n",
-  "   Semnal: bias score global pare moderat sau mic, dar unele clustere au bias score ridicat? ",
-  "   Sau media globală pare echilibrată dar subgrupuri (clustere) arată disparități mari? ",
-  "   Disparitatea e reală dar ascunsă de agregare.\n\n",
-  
-  "4. BIAS INTERSECȚIONAL\n",
-  "   Semnal: un cluster are concomitent: concentrare pe atribut sensibil (>60%) + ",
-  "   educație scăzută + mediu rural + venit scăzut. ",
-  "   Nu un singur atribut, ci combinația a 2-3 dimensiuni dezavantajoase simultan.\n\n",
-  
-  "5. BIAS ISTORIC\n",
-  "   Semnal: disparitățile găsite urmează tipare socioeconomice cunoscute ",
-  "   (femei/minorități cu venituri sistematic mai mici, educație mai scăzută, ",
-  "   regiuni defavorizate). NU afirma cauzalitate — semnalează consistența cu ",
-  "   inegalitățile structurale istorice.\n\n",
-  
-  "6. BIAS DE EȘANTIONARE\n",
-  "   Semnal: proporțiile grupurilor sensibile din date reflectă realitatea populației? ",
-  "   Dacă un grup e mult sub-/supra-reprezentat față de populația generală, ",
-  "   concluziile pot fi distorsionate. Verifică alertele de reprezentare.\n\n",
-  
-  "7. BIAS DE MĂSURARE\n",
-  "   Semnal: avertismente despre >20% valori lipsă la target, coloană de vârstă/educație ",
-  "   nedetectată, sau indicator socio care nu pare monetar (relevant doar în tab socio). ",
-  "   Aceste probleme de calitate a datelor afectează toate celelalte analize.\n\n",
+  "TIPURILE DE BIAS DE ACOPERIT (definiții neutre; tu hotărăști dacă și unde apar în date):\n",
+  "Bias de reprezentare: un grup apare în date mult sub ponderea unei distribuții echitabile.\n",
+  "Bias de proxy: clustere formate fără atributul sensibil ajung totuși dominate de un grup, ...\n",
+  "Bias de agregare: o medie globală echilibrată ascunde disparități mari la nivel de subgrupuri sau clustere.\n",
+  "Bias intersecțional: dezavantajul rezultă din combinarea mai multor dimensiuni simultan, ...\n",
+  "Bias istoric: disparitățile observate sunt consistente cu inegalități socioeconomice cunoscute; ...\n",
+  "Bias de eșantionare: proporțiile grupurilor din date nu reflectă populația reală ...\n",
+  "Bias de măsurare: probleme de calitate a datelor ... afectează celelalte analize.\n\n",
   
   "REGULI STRICTE:\n",
   "- Scrie EXCLUSIV în română.\n",
@@ -64,17 +42,28 @@ LLM_DEFAULT_URL   <- "http://localhost:11434"
   "- Dacă datele lipsesc pentru un tip de bias, scrie explicit 'date insuficiente'.\n",
   "- Maxim 2-3 propoziții per tip de bias.\n\n",
   
-  "FORMATUL OBLIGATORIU AL RĂSPUNSULUI:\n",
-  "Structurează ÎNTOTDEAUNA răspunsul tău cu exact aceste secțiuni, în această ordine:\n",
-  "## Bias de reprezentare\n",
-  "## Bias de proxy\n",
-  "## Bias de agregare\n",
-  "## Bias intersecțional\n",
-  "## Bias istoric\n",
-  "## Bias de eșantionare\n",
-  "## Bias de măsurare\n",
-  "## Limitări\n",
-  "Fiecare secțiune: 2-3 propoziții concise bazate strict pe datele primite.\n"
+  "FORMATUL RĂSPUNSULUI:\n",
+  "Nu folosi caracterele *, #, = sau alte simboluri Markdown. ",
+  "Scrie titlurile secțiunilor ca text simplu, fiecare pe un rând separat.\n",
+  "Parcurge cele șapte tipuri de bias în ordinea de mai sus, apoi secțiunea Limitări. ",
+  "Folosește exact aceste titluri, ca text simplu:\n",
+  "Bias de reprezentare\n",
+  "Bias de proxy\n",
+  "Bias de agregare\n",
+  "Bias intersecțional\n",
+  "Bias istoric\n",
+  "Bias de eșantionare\n",
+  "Bias de măsurare\n",
+  "Limitări\n\n",
+  "DETALIAZĂ doar tipurile de bias pentru care există semnal real în datele primite. ",
+  "Pentru un tip detaliat, scrie sub titlu două paragrafe scurte, separate de un rând gol:\n",
+  "  Ce este: o propoziție care definește pe scurt tipul de bias și cum apare în practică.\n",
+  "  Ce arată datele: 1-2 propoziții care interpretează semnalele din date PRIN PRISMA ",
+  "VENITULUI (care grup câștigă mai puțin sau mai mult), citând cifre concrete: diferența ",
+  "de venit absolută și procentuală, Cohen's d, SPD, bias score etc.\n",
+  "Pentru tipurile FĂRĂ semnal în datele primite, scrie doar titlul urmat de o singură ",
+  "propoziție: 'Date insuficiente pentru evaluare.' — fără a mai defini tipul de bias.\n",
+  "Secțiunea Limitări: 1-2 propoziții despre ce nu se poate concluziona din datele disponibile.\n"
 )
 build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) {
   out <- "=== CONTEXT ANALIZĂ ===\n"
@@ -137,6 +126,18 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
     
     if (is.null(mr$spd)) {
       # target numeric
+      g_means <- suppressWarnings(sapply(mr$summary, function(g) as.numeric(g$Media)))
+      g_nms   <- sapply(mr$summary, function(g) as.character(g$Grup))
+      if (length(g_means) >= 2 && all(is.finite(g_means))) {
+        i_lo <- which.min(g_means); i_hi <- which.max(g_means)
+        gap_abs <- g_means[i_hi] - g_means[i_lo]
+        gap_pct <- if (g_means[i_lo] != 0) gap_abs / g_means[i_lo] * 100 else NA_real_
+        out <- paste0(out, sprintf(
+          "REZUMAT DISPARITATE DE VENIT: cel mai mic venit mediu -> grupul '%s' (%.2f); cel mai mare -> grupul '%s' (%.2f). Diferență: %.2f%s.\n",
+          g_nms[i_lo], g_means[i_lo], g_nms[i_hi], g_means[i_hi], gap_abs,
+          if (!is.na(gap_pct)) sprintf(" (grupul '%s' are cu %.1f%% mai mult decât '%s')",
+                                       g_nms[i_hi], gap_pct, g_nms[i_lo]) else ""))
+      }
       for (g in mr$summary)
         out <- paste0(out, sprintf("  Grup '%s': N=%d, medie=%.2f, mediană=%.2f, SD=%.2f\n",
                                    g$Grup, as.integer(g$N), as.numeric(g$Media),
@@ -213,7 +214,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
   
   # --- Clustering ---
   if (!is.null(cr) && is.null(cr$error)) {
-    out <- paste0(out, sprintf("\n=== CLUSTERING K-MEANS (k=%d, %s rânduri) ===\n",
+    out <- paste0(out, sprintf("\nCLUSTERING K-MEANS (k=%d, %s rânduri)\n",
                                as.integer(cr$n_clusters),
                                format(as.integer(cr$n_rows_used), big.mark = ".")))
     for (p in cr$profiles) {
@@ -291,14 +292,14 @@ call_ollama <- function(messages, model = LLM_DEFAULT_MODEL, url = LLM_DEFAULT_U
     model   = model,
     messages = messages,
     stream  = FALSE,
-    options = list(temperature = 0.3, num_ctx = 8192)
+    options = list(temperature = 0.3, num_ctx = 8192, num_predict = 900)
   )
   tryCatch({
     resp <- httr::POST(
       url  = paste0(url, "/api/chat"),
       body = jsonlite::toJSON(body, auto_unbox = TRUE),
       httr::content_type_json(),
-      httr::timeout(180)
+      httr::timeout(250)
     )
     if (httr::status_code(resp) != 200)
       return(list(error = paste("Eroare Ollama:", httr::status_code(resp))))
