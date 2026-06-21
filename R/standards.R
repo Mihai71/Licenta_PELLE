@@ -1,15 +1,9 @@
-# R/standards.R - Constante standardizate și date de referință (FR-03)
 library(dplyr)
 
-# ---------------------------------------------------------------------------
-# FR-03: Grupare vârstă standardizată
-# ---------------------------------------------------------------------------
+#Grupare vârstă standardizată
+
 age_bins   <- c(0, 18, 25, 45, 60, 150)
 age_labels <- c("<18", "18-25", "26-45", "46-59", "60+")
-
-# ---------------------------------------------------------------------------
-# FR-03: Clasificare educație
-# ---------------------------------------------------------------------------
 edu_levels <- c("Primară", "Secundară", "Terțiară")
 
 edu_map <- list(
@@ -32,29 +26,21 @@ classify_education <- function(x) {
   result
 }
 
-# ---------------------------------------------------------------------------
-# FR-03: Date de referință România și UE (fallback static, actualizate 2024)
-# Sursa: Eurostat (earn_ses_annual), INS România
-# Unitate: RON/lună  (conversie din EUR la curs 1 EUR = 5.2 RON, mai 2024)
-# NOTĂ METODOLOGICĂ:
-#   - RO = salariu mediu NET (sursa INS Romania 2023)
-#   - EU/DE/FR/HU/BG = salariu mediu BRUT (sursa Eurostat earn_ses_annual 2023)
-#   Comparația net vs. brut este orientativă; salariul net RO e aprox. 70-75% din brut.
-# ---------------------------------------------------------------------------
-RON_PER_EUR <- 5.2   # curs de schimb aproximativ utilizat pentru conversie
+RON_PER_EUR <- 5.2  
 
 reference_data <- list(
   salary = list(
-    RO  = 6250,   # 1202 EUR net  × 5.2 — Salariu mediu net România 2023 (INS)
-    EU  = 15532,  # 2987 EUR brut × 5.2 — Salariu mediu brut UE-27 2023 (Eurostat)
-    DE  = 21346,  # 4105 EUR brut × 5.2 — Germania
-    FR  = 17742,  # 3412 EUR brut × 5.2 — Franța
-    HU  = 7571,   # 1456 EUR brut × 5.2 — Ungaria
-    BG  = 5320    # 1023 EUR brut × 5.2 — Bulgaria
+    RO  = 6250,   # 1202 EUR net  × 5.2, Salariu mediu net România 2023 (INS)
+    RO_BRUT = 8621,
+    EU  = 15532,  # 2987 EUR brut × 5.2, Salariu mediu brut UE-27 2023 (Eurostat)
+    DE  = 21346,  # 4105 EUR brut × 5.2, Germania
+    FR  = 17742,  # 3412 EUR brut × 5.2, Franța
+    HU  = 7571,   # 1456 EUR brut × 5.2, Ungaria
+    BG  = 5320    # 1023 EUR brut × 5.2, Bulgaria
   ),
   pension = list(
-    RO  = 3931,   # 756  EUR      × 5.2 — Pensie medie România 2023 (CNPP)
-    EU  = 7540    # 1450 EUR      × 5.2 — Pensie medie UE
+    RO  = 3931,   # 756  EUR      × 5.2, Pensie medie România 2023 (CNPP)
+    EU  = 7540    # 1450 EUR      × 5.2, Pensie medie UE
   )
 )
 
@@ -68,7 +54,7 @@ get_eurostat_reference <- function(indicator = "salary", country = "RO") {
                                                  earnings = "MEAN", unit = "EUR"))
     if (!is.null(dat) && nrow(dat) > 0) {
       val <- dat %>% filter(time == max(time)) %>% pull(values)
-      # Eurostat returnează EUR — convertim în RON
+      # Eurostat returnează EUR, convertim în RON
       if (length(val) > 0 && !is.na(val[1])) return(as.numeric(val[1]) * RON_PER_EUR)
     }
     stop("no data")
@@ -79,10 +65,9 @@ get_eurostat_reference <- function(indicator = "salary", country = "RO") {
   })
 }
 
-# ---------------------------------------------------------------------------
-# NUTS România – regiunile de dezvoltare (NUTS 2) și județe (NUTS 3)
+# NUTS România, regiunile de dezvoltare (NUTS 2) și județe (NUTS 3)
 # Sursa: Eurostat LAU-NUTS 2024
-# ---------------------------------------------------------------------------
+
 nuts2_ro <- data.frame(
   NUTS_ID   = c("RO11", "RO12", "RO21", "RO22", "RO31", "RO32", "RO41", "RO42"),
   NAME_RO   = c("Nord-Vest", "Centru", "Nord-Est", "Sud-Est",

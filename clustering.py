@@ -21,7 +21,7 @@ def _normalize_series(s):
     return (s - mn) / (mx - mn)
 
 
-# Mapare ordinală educație (română + engleză) — păstrează ierarhia în K-Means
+# Mapare ordinală educație (română + engleză), păstrează ierarhia în K-Means
 _EDU_ORDINAL = {
     'fara scoala': 0, 'fara': 0, 'no education': 0,
     'primar': 1, 'elementar': 1, 'primary': 1, '4 clase': 1,
@@ -74,10 +74,7 @@ def _encode_column(series, role=None):
         encoded = s_str.map(mapping)
         return pd.DataFrame({'_' + series.name: _normalize_series(encoded)})
 
-
-# ---------------------------------------------------------------------------
 # K-Means vectorizat cu NumPy
-# ---------------------------------------------------------------------------
 
 def _kmeans_numpy(X, k, max_iter=300, random_state=42):
     rng = np.random.RandomState(random_state)
@@ -136,10 +133,7 @@ def _pca_numpy(X, n_components=2, feature_labels=None):
 
     return projected, pc_labels
 
-
-# ---------------------------------------------------------------------------
 # Elbow method
-# ---------------------------------------------------------------------------
 
 def compute_elbow(file_path, col_sex, col_age, col_edu, col_env,
                   col_income, col_extra_json="[]"):
@@ -181,10 +175,7 @@ def compute_elbow(file_path, col_sex, col_age, col_edu, col_env,
     except Exception as e:
         return {"error": str(e)}
 
-
-# ---------------------------------------------------------------------------
 # Auto-etichetare cluster
-# ---------------------------------------------------------------------------
 
 def _auto_label(profile, global_income_mean, global_age_mean):
     parts = []
@@ -208,10 +199,7 @@ def _auto_label(profile, global_income_mean, global_age_mean):
         elif edu >= 5.5: parts.append("Edu. înaltă")
     return ", ".join(parts) if parts else f"Cluster {profile['cluster_id']}"
 
-
-# ---------------------------------------------------------------------------
-# Profilare clustere — FIX sex text + educatie text
-# ---------------------------------------------------------------------------
+# Profilare clustere, FIX sex text + educatie text
 
 def _profile_clusters(df, col_roles):
     profiles   = []
@@ -237,7 +225,7 @@ def _profile_clusters(df, col_roles):
             p["age_mean"]   = round(float(age_num.mean()), 1)
             p["age_median"] = round(float(age_num.median()), 1)
 
-        # Sex — text (M/F) SAU numeric (1/2/ESS cu coduri speciale)
+        # Sex, text (M/F) SAU numeric (1/2/ESS cu coduri speciale)
         sex_str    = grp[col_sex].astype(str).str.lower().str.strip()
         unique_sex = set(sex_str.unique()) - {'nan', 'none', ''}
         f_matches  = unique_sex & _FEMALE_KW
@@ -300,10 +288,7 @@ def _profile_clusters(df, col_roles):
         profiles.append(p)
     return profiles
 
-
-# ---------------------------------------------------------------------------
 # Analiză bias în interiorul clusterelor
-# ---------------------------------------------------------------------------
 
 def _analyze_bias_per_cluster(df, col_roles):
     col_sex    = col_roles['sex']
@@ -367,6 +352,7 @@ def _bias_between_groups(df_grp, group_col, income_series, label):
             s2 = float(np.std(g2, ddof=1)) if n2 > 1 else 0.0
             pooled = math.sqrt(((n1-1)*s1**2 + (n2-1)*s2**2) / (n1+n2-2)) if (n1+n2-2) > 0 else 0.0
             d      = abs(m1 - m2) / pooled if pooled > 0 else 0.0
+            result["metric"]        = "d"
             result["cohen_d"]       = round(float(d), 4)
             result["mean_diff"]     = round(float(m1 - m2), 2)
             result["pct_diff"]      = round(float((m1-m2)/m2*100), 1) if m2 != 0 else None
@@ -378,17 +364,17 @@ def _bias_between_groups(df_grp, group_col, income_series, label):
             ss_between = sum(len(v) * (np.mean(v) - grand_mean) ** 2 for v in groups.values())
             ss_total   = float(np.sum((all_vals - grand_mean) ** 2))
             eta2       = ss_between / ss_total if ss_total > 0 else 0.0
+            result["metric"]        = "eta2"
             result["cohen_d"]       = round(float(eta2), 4)
-            result["cohen_d_label"] = "η² (Multi-grup)"
+            # Praguri η² (Cohen 1988): 0.01 mic, 0.06 mediu, 0.14 mare
+            result["cohen_d_label"] = ("Neglijabil" if eta2 < 0.01 else "Mic" if eta2 < 0.06
+                                        else "Mediu" if eta2 < 0.14 else "Mare")
 
         return result
     except Exception:
         return None
 
-
-# ---------------------------------------------------------------------------
 # Funcție principală
-# ---------------------------------------------------------------------------
 
 def run_clustering(file_path, col_sex, col_age, col_edu, col_env,
                    col_income, col_extra_json="[]", n_clusters=4):

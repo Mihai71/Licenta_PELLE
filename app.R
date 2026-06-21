@@ -14,20 +14,17 @@ library(reticulate)
 library(httr)
 library(jsonlite)
 
-# Plotly pentru grafice interactive – FR-07
+# Plotly pentru grafice interactive
 if (requireNamespace("plotly", quietly = TRUE)) library(plotly)
 
-# readxl pentru suport Excel – FR-01
+# readxl pentru suport Excel
 if (requireNamespace("readxl", quietly = TRUE)) library(readxl)
 
 source("R/standards.R")
 source_python("logic.py")
 source_python("clustering.py")
 source("llm.R")
-
-# ---------------------------------------------------------------------------
 # Helpere R
-# ---------------------------------------------------------------------------
 
 has_plotly <- requireNamespace("plotly", quietly = TRUE)
 
@@ -106,8 +103,7 @@ ui <- dashboardPage(
       menuItem("Analiză Generală", tabName = "tab_bias",   icon = icon("balance-scale")),
       menuItem("Socio-Demografic", tabName = "tab_socio",  icon = icon("users")),
       menuItem("Vizualizare",      tabName = "tab_viz",    icon = icon("chart-bar")),
-      menuItem("Clustere AI", tabName = "tab_clustering", icon = icon("project-diagram")),
-      menuItem("Export",           tabName = "tab_export", icon = icon("download"))
+      menuItem("Clustere AI", tabName = "tab_clustering", icon = icon("project-diagram"))
     ),
     tags$hr(),
     fileInput("file", "Încarcă fișier (CSV / Excel)",
@@ -303,6 +299,7 @@ ui <- dashboardPage(
                     column(4,
                            selectInput("socio_ref_country", "Compară cu:",
                                        choices = c("Media României"  = "RO",
+                                                   "Media României (brut)" = "RO_BRUT",
                                                    "Media UE"        = "EU",
                                                    "Germania"        = "DE",
                                                    "Franța"          = "FR",
@@ -344,19 +341,23 @@ ui <- dashboardPage(
                 tabBox(title = "Grafice", width = 12,
                        tabPanel("Boxplot",
                                 p("Distribuția valorilor numerice pe grupuri"),
-                                chart_output("plot_boxplot")
+                                chart_output("plot_boxplot"),
+                                div(class = "table-toolbar", uiOutput("ui_dl_boxplot"))
                        ),
                        tabPanel("Density Plot",
                                 p("Suprapunerea distribuțiilor per grup"),
-                                chart_output("plot_density")
+                                chart_output("plot_density"),
+                                div(class = "table-toolbar", uiOutput("ui_dl_density"))
                        ),
                        tabPanel("Barplot Diferențe",
                                 p("Diferențele mediei față de media globală"),
-                                chart_output("plot_barplot")
+                                chart_output("plot_barplot"),
+                                div(class = "table-toolbar", uiOutput("ui_dl_barplot"))
                        ),
                        tabPanel("Proporții (target binar)",
                                 p("Proporția outcome-ului pozitiv pe grupuri"),
-                                chart_output("plot_parity")
+                                chart_output("plot_parity"),
+                                div(class = "table-toolbar", uiOutput("ui_dl_parity"))
                        )
                 )
               )
@@ -467,10 +468,6 @@ ui <- dashboardPage(
                   box(title = tagList(icon("chart-scatter"), " Vizualizare Clustere (PCA 2D)"),
                       status = "info", solidHeader = TRUE, width = 8,
                       plotly::plotlyOutput("plot_cluster_scatter", height = "420px")
-                  ),
-                  box(title = tagList(icon("table"), " Rezumat Clustere"),
-                      status = "primary", solidHeader = TRUE, width = 4,
-                      DTOutput("tbl_cluster_summary")
                   )
                 ),
                 
@@ -496,30 +493,9 @@ ui <- dashboardPage(
                 )
               ),
               llm_box_ui("clustering")
-      ),
-      # Tabul de export (al șaselea)
-      
-      tabItem(tabName = "tab_export",
-              fluidRow(
-                box(title = "Export rezultate",
-                    status = "primary", solidHeader = TRUE, width = 12,
-                    p("Descarcă graficele și raportul de analiză."),
-                    tags$br(),
-                    fluidRow(
-                      column(3, downloadButton("dl_boxplot", "Boxplot (PNG)",
-                                               class = "btn-info btn-block")),
-                      column(3, downloadButton("dl_density", "Density Plot (PNG)",
-                                               class = "btn-info btn-block")),
-                      column(3, downloadButton("dl_barplot", "Barplot (PNG)",
-                                               class = "btn-info btn-block")),
-                      column(3, downloadButton("dl_report",  "Raport CSV",
-                                               class = "btn-success btn-block"))
-                    ),
-                    tags$br(),
-                    uiOutput("ui_export_preview")
-                )
-              )
       )
+      
+      
     )
   )
 )
@@ -1173,7 +1149,9 @@ server <- function(input, output, session) {
     mr <- metrics_result()
     if (is.null(mr$summary)) return(NULL)
     df_sum <- as.data.frame(do.call(rbind, lapply(mr$summary, as.data.frame)))
-    datatable(df_sum, rownames = FALSE, options = list(dom = "t"),
+    datatable(df_sum, rownames = FALSE,
+              options = list(pageLength = 10, lengthMenu = c(10, 25, 50, 100),
+                             dom = "ltip", scrollX = TRUE),
               class = "metric-table display")
   })
   
@@ -1203,14 +1181,14 @@ server <- function(input, output, session) {
     group_col <- if (type == "age") {
       age_col <- names(df)[str_detect(tolower(names(df)), "v[âa]rst[ăa]|agea|^age$")]
       if (length(age_col) == 0) {
-        showNotification("Nu s-a detectat o coloană de vârstă.", type = "warning")
+        showNotification("Nu s-a detectat o coloană de vârstă. Dacă există, vă rog să o numiți corespunzător.", type = "warning")
         return(NULL)
       }
       age_col[1]
     } else if (type == "edu") {
       edu_col <- names(df)[str_detect(tolower(names(df)), "educa|studi|eisced")]
       if (length(edu_col) == 0) {
-        showNotification("Nu s-a detectat o coloană de educație.", type = "warning")
+        showNotification("Nu s-a detectat o coloană de educație. Dacă există, vă rog să o numiți corespunzător.", type = "warning")
         return(NULL)
       }
       df[[edu_col[1]]] <- classify_education(df[[edu_col[1]]])
@@ -1218,7 +1196,7 @@ server <- function(input, output, session) {
     } else {
       reg_col <- names(df)[str_detect(tolower(names(df)), "regiu|jude[tț]|nuts|localit|zona|domicil")]
       if (length(reg_col) == 0) {
-        showNotification("Nu s-a detectat o coloană de regiune/județ.", type = "warning")
+        showNotification("Nu s-a detectat o coloană de regiune/județ. Dacă există, vă rog să o numiți corespunzător.", type = "warning")
         return(NULL)
       }
       reg_col[1]
@@ -1274,7 +1252,8 @@ server <- function(input, output, session) {
     sign_lbl  <- if (diff_val >= 0) "mai mare" else "mai mic"
     color_cls <- if (diff_val < 0) "alert-orange" else "alert-green"
     ref_label <- switch(ref_country,
-                        RO = "Media României (net)", EU = "Media UE (brut)",
+                        RO = "Media României (net)", RO_BRUT = "Media României (brut)",
+                        EU = "Media UE (brut)",
                         DE = "Germania (brut)",      FR = "Franța (brut)",
                         HU = "Ungaria (brut)",       BG = "Bulgaria (brut)", ref_country)
     
@@ -1291,12 +1270,15 @@ server <- function(input, output, session) {
       tags$hr(),
       div(style = "font-size:11px; color:#888; line-height:1.4;",
           icon("info-circle"), " ",
+          tags$b("Acest tab este dedicat exclusiv analizei veniturilor exprimate în lei (RON). ",
+                 "Dacă indicatorul ales nu reprezintă o sumă în lei, comparațiile de mai jos nu au sens."),
+          tags$br(), tags$br(),
           tags$b("Notă metodologică:"), tags$br(),
-          "Valoarea trasmisă ca parametru financiar se presupune a fi o sumă de bani în RON! Vă rugăm testați doar cu astfel de date",tags$br(),
           "Valorile de referință sunt exprimate în RON, convertite din EUR",
           " la cursul de 1 EUR = 5,2 RON (mai 2026).", tags$br(),
-          "România: salariu mediu ", tags$b("net"), " (sursa INS 2023).", tags$br(),
-          "UE/DE/FR/HU/BG: salariu mediu ", tags$b("brut"), " (sursa Eurostat 2023).", tags$br(),
+          "România: salariu mediu net și brut (sursa INS 2023)" ,
+          " (estimat din net la raportul de aproximativ 72,5%).", tags$br(),
+          "UE/DE/FR/HU/BG: salariu mediu ", "brut", " (sursa Eurostat 2023).", tags$br(),
           "Comparația net vs. brut este orientativă.")
     )
   })
@@ -1316,9 +1298,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # -------------------------------------------------------------------------
-  # TAB VIZUALIZARE (FR-07)
-  # -------------------------------------------------------------------------
+  # TAB VIZUALIZARE
   
   output$plot_boxplot <- if (has_plotly) plotly::renderPlotly({
     req(data_final(), input$sensitive, input$target, input$run)
@@ -1436,9 +1416,7 @@ server <- function(input, output, session) {
            title = paste("Proporția categoriilor –", input$target, "pe", input$sensitive))
   })
   
-  # -------------------------------------------------------------------------
-  # TAB EXPORT
-  # -------------------------------------------------------------------------
+  # TAB EXPORT (discontinued ca tab separat, am mutat exportul graficelor chiar langa locul in care sunt generate)
   
   make_boxplot_gg <- function() {
     req(data_for_analysis(), input$sensitive, input$target)
@@ -1479,6 +1457,18 @@ server <- function(input, output, session) {
       labs(x = input$sensitive, y = "Diferența față de medie", fill = NULL)
   }
   
+  make_parity_gg <- function() {
+    req(data_for_analysis(), input$sensitive, input$target)
+    df <- data_for_analysis()
+    ggplot(df, aes(x = .data[[input$sensitive]],
+                   fill = as.factor(.data[[input$target]]))) +
+      geom_bar(position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      theme_minimal(base_size = 14) +
+      labs(y = "Proporție", fill = input$target, x = input$sensitive,
+           title = "Proporția categoriilor")
+  }
+  
   output$dl_boxplot <- downloadHandler(
     filename = function() paste0("boxplot_", Sys.Date(), ".png"),
     content  = function(file) ggplot2::ggsave(file, plot = make_boxplot_gg(),
@@ -1495,45 +1485,34 @@ server <- function(input, output, session) {
                                               width = 10, height = 6, dpi = 150)
   )
   
-  output$dl_report <- downloadHandler(
-    filename = function() paste0("raport_disparitati_", Sys.Date(), ".csv"),
-    content  = function(file) {
-      req(metrics_result(), bias_result())
-      mr <- metrics_result()
-      br <- bias_result()
-      lines <- c(
-        paste0("Data analizei,",   Sys.Date()),
-        paste0("Atribut sensibil,", input$sensitive),
-        paste0("Target,",           input$target),
-        paste0("Bias Score,",       br$bias_score),
-        paste0("Severitate,",       br$severity), ""
-      )
-      if (!is.null(mr$cohen_d))
-        lines <- c(lines,
-                   paste0("Cohen d,",         mr$cohen_d),
-                   paste0("Interpretare,",    mr$cohen_d_interpretation),
-                   paste0("Diferenta medie,", mr$mean_diff),
-                   paste0("Diferenta %,",     mr$pct_diff),
-                   paste0("t-stat,",          mr$t_stat),
-                   paste0("p-value t-test,",  mr$p_value_ttest))
-      if (!is.null(mr$spd))
-        lines <- c(lines,
-                   paste0("SPD,",              mr$spd),
-                   paste0("Disparate Impact,", mr$disparate_impact),
-                   paste0("Risk Ratio,",       mr$risk_ratio))
-      writeLines(lines, file)
-    }
+  output$dl_parity <- downloadHandler(
+    filename = function() paste0("proportii_", Sys.Date(), ".png"),
+    content  = function(file) ggplot2::ggsave(file, plot = make_parity_gg(),
+                                              width = 10, height = 6, dpi = 150)
   )
   
-  output$ui_export_preview <- renderUI({
-    req(input$run)
-    div(class = "alert-box alert-green",
-        icon("info-circle"),
-        " Rulați analiza mai întâi (butonul din sidebar), apoi descărcați raportul.")
+  # Butonul de descărcare apare doar pentru graficul generat
+  output$ui_dl_boxplot <- renderUI({
+    req(input$run, input$target, data_info())
+    if (!identical(as.character(data_info()$types[[input$target]]), "Numerica")) return(NULL)
+    downloadButton("dl_boxplot", "Descarcă PNG", class = "btn-sm btn-info")
   })
-  # =========================================================================
+  output$ui_dl_density <- renderUI({
+    req(input$run, input$target, data_info())
+    if (!identical(as.character(data_info()$types[[input$target]]), "Numerica")) return(NULL)
+    downloadButton("dl_density", "Descarcă PNG", class = "btn-sm btn-info")
+  })
+  output$ui_dl_barplot <- renderUI({
+    req(input$run, input$target, data_info())
+    if (!identical(as.character(data_info()$types[[input$target]]), "Numerica")) return(NULL)
+    downloadButton("dl_barplot", "Descarcă PNG", class = "btn-sm btn-info")
+  })
+  output$ui_dl_parity <- renderUI({
+    req(input$run, input$target, data_info())
+    if (!(as.character(data_info()$types[[input$target]]) %in% c("Binara", "Categorica"))) return(NULL)
+    downloadButton("dl_parity", "Descarcă PNG", class = "btn-sm btn-info")
+  })
   # SERVER: TAB CLUSTERE ML
-  # =========================================================================
   
   # Populare dropdowns când se încarcă fișierul
   observeEvent(input$file, {
@@ -1642,7 +1621,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # --- Scatter PCA 2D ---
+  #Scatter PCA 2D
   output$plot_cluster_scatter <- plotly::renderPlotly({
     req(clustering_result())
     res <- clustering_result()
@@ -1715,32 +1694,7 @@ server <- function(input, output, session) {
       )
   })
   
-  # --- Tabel rezumat clustere ---
-  output$tbl_cluster_summary <- renderDT({
-    req(clustering_result())
-    res <- clustering_result()
-    req(is.null(res$error))
-    
-    profiles <- res$profiles
-    tbl <- do.call(rbind, lapply(profiles, function(p) {
-      p <- py_to_r_safe(p)
-      data.frame(
-        Cluster = paste0("C", p$cluster_id),
-        Label   = if (!is.null(p$label)) as.character(p$label) else "–",
-        `N`      = p$n,
-        `%`      = paste0(p$pct, "%"),
-        `Venit mediu` = if (!is.null(p$income_mean)) round(as.numeric(p$income_mean), 2) else "–",
-        `Vârstă medie` = if (!is.null(p$age_mean)) round(as.numeric(p$age_mean), 1) else "–",
-        `% Femei` = if (!is.null(p$female_pct)) paste0(p$female_pct, "%") else "–",
-        check.names = FALSE
-      )
-    }))
-    
-    datatable(tbl, options = list(dom = 't', pageLength = 10),
-              rownames = FALSE, class = "compact stripe")
-  })
-  
-  # --- Profile detaliate ---
+  #Profile detaliate
   output$ui_cluster_profiles <- renderUI({
     req(clustering_result())
     res <- clustering_result()
@@ -1798,7 +1752,7 @@ server <- function(input, output, session) {
     do.call(fluidRow, profile_cards)
   })
   
-  # --- Bias per cluster ---
+  #Bias per cluster
   output$ui_cluster_bias <- renderUI({
     req(clustering_result())
     res <- clustering_result()
@@ -1813,12 +1767,19 @@ server <- function(input, output, session) {
       
       analyses_ui <- lapply(cb$analyses, function(a) {
         a <- py_to_r_safe(a)
-        cd_label <- if (!is.null(a$cohen_d_label)) a$cohen_d_label else "–"
-        cd_val   <- if (!is.null(a$cohen_d)) round(as.numeric(a$cohen_d), 3) else "–"
+        cd_label <- if (!is.null(a$cohen_d_label)) a$cohen_d_label else "-"
+        cd_val   <- if (!is.null(a$cohen_d)) round(as.numeric(a$cohen_d), 3) else "-"
+        # Alege prefixul după metrici: Cohen's d (2 grupuri) vs eta2 (3+ grupuri)
+        is_eta   <- (!is.null(a$metric) && identical(as.character(a$metric), "eta2")) ||
+          (!is.null(a$cohen_d_label) && grepl("Multi-grup|η²", a$cohen_d_label))
+        metric_txt <- if (is_eta)
+          paste0("η² = ", cd_val, " (", cd_label, ", multi-grup)")
+        else
+          paste0("Cohen's d = ", cd_val, " (", cd_label, ")")
         
         div(style = "margin: 4px 0; padding: 4px 8px; background:#f5f5f5; border-radius:4px;",
             tags$span(tags$b(a$attribute), ": "),
-            tags$span(paste0("Cohen's d = ", cd_val, " (", cd_label, ")")),
+            tags$span(metric_txt),
             if (!is.null(a$pct_diff))
               tags$span(style = "color:#888; font-size:12px;",
                         paste0(" | Diferență: ", a$pct_diff, "%"))
@@ -1874,7 +1835,7 @@ server <- function(input, output, session) {
         showlegend = FALSE
       )
   })
-  # --- Vârstă vs Venit ---
+  #Vârstă vs Venit
   output$plot_cl_age_income <- plotly::renderPlotly({
     req(clustering_result())
     res <- clustering_result()
@@ -1909,7 +1870,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # --- Educație vs Venit ---
+  #Educație vs Venit
   output$plot_cl_edu_income <- plotly::renderPlotly({
     req(clustering_result())
     res <- clustering_result()
@@ -1959,7 +1920,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # --- Mediu/Origine vs Venit ---
+  #Mediu/Origine vs Venit
   output$plot_cl_env_income <- plotly::renderPlotly({
     req(clustering_result())
     res <- clustering_result()
@@ -1991,7 +1952,7 @@ server <- function(input, output, session) {
       legend  = list(title = list(text = "Cluster"))
     )
   })
-  # --- Elbow Method ---
+  #Elbow Method
   elbow_result <- reactiveVal(NULL)
   
   output$elbow_done <- reactive({
@@ -2077,10 +2038,7 @@ server <- function(input, output, session) {
         legend = list(orientation = "h")
       )
   })
-  # -------------------------------------------------------------------------
-  # LLM — interpretare și dialog
-  # -------------------------------------------------------------------------
-  
+  # LLM, interpretare și dialog
   .render_llm_chat <- function() {
     renderUI({
       hist <- llm_history()

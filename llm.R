@@ -1,6 +1,6 @@
-# llm.R — Interpretare LLM via Ollama (local, GDPR compliant)
+# llm.R: Interpretare LLM via Ollama (local, GDPR compliant)
 
-LLM_DEFAULT_MODEL <- "llama3.1:8b"
+LLM_DEFAULT_MODEL <- "qwen2.5:14b"
 LLM_DEFAULT_URL   <- "http://localhost:11434"
 
 .LLM_SYSTEM <- paste0(
@@ -24,7 +24,7 @@ LLM_DEFAULT_URL   <- "http://localhost:11434"
   "concluzii proporționale cu mărimea lor. Fiecare cifră vine deja însoțită de eticheta ei de ",
   "interpretare (de pildă mic, mediu, mare, moderat), pe care o poți folosi ca reper.\n\n",
   
-  "PROCESUL TĂU DE ANALIZĂ — parcurge fiecare tip în ordine:\n\n",
+  "PROCESUL TĂU DE ANALIZĂ: parcurge fiecare tip în ordine:\n\n",
   
   "TIPURILE DE BIAS DE ACOPERIT (definiții neutre; tu hotărăști dacă și unde apar în date):\n",
   "Bias de reprezentare: un grup apare în date mult sub ponderea unei distribuții echitabile.\n",
@@ -37,7 +37,7 @@ LLM_DEFAULT_URL   <- "http://localhost:11434"
   
   "REGULI STRICTE:\n",
   "- Scrie EXCLUSIV în română.\n",
-  "- NU stabili relații cauzale — datele observaționale nu permit asta.\n",
+  "- NU stabili relații cauzale deoarece datele observaționale nu permit asta.\n",
   "- Semnalează disparitățile ca ipoteze de investigat, nu verdicte.\n",
   "- Dacă datele lipsesc pentru un tip de bias, scrie explicit 'date insuficiente'.\n",
   "- Maxim 2-3 propoziții per tip de bias.\n\n",
@@ -62,11 +62,11 @@ LLM_DEFAULT_URL   <- "http://localhost:11434"
   "VENITULUI (care grup câștigă mai puțin sau mai mult), citând cifre concrete: diferența ",
   "de venit absolută și procentuală, Cohen's d, SPD, bias score etc.\n",
   "Pentru tipurile FĂRĂ semnal în datele primite, scrie doar titlul urmat de o singură ",
-  "propoziție: 'Date insuficiente pentru evaluare.' — fără a mai defini tipul de bias.\n",
+  "propoziție: 'Date insuficiente pentru evaluare.', fără a mai defini tipul de bias.\n",
   "Secțiunea Limitări: 1-2 propoziții despre ce nu se poate concluziona din datele disponibile.\n"
 )
 build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) {
-  out <- "=== CONTEXT ANALIZĂ ===\n"
+  out <- "CONTEXT ANALIZĂ\n"
   
   if (!is.null(ctx)) {
     if (!is.null(ctx$n_rows) && !is.null(ctx$n_cols))
@@ -88,7 +88,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
     }
   }
   
-  # --- Alerte distribuționale ---
+  #Alerte distribuționale 
   if (!is.null(dal)) {
     sk <- dal$skewness
     if (!is.null(sk) && !is.null(sk$skewness))
@@ -102,7 +102,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
       moderate <- Filter(function(x) !is.null(x$severity) && x$severity == "moderate", imb)
       if (length(serious) > 0) {
         grps <- sapply(serious, function(x) sprintf("%s (%.1f%%)", x$group, as.numeric(x$pct)))
-        out  <- paste0(out, "Subreprezentare SERIOASĂ (sub 0,5/k — sub jumătate din cota echitabilă): ",
+        out  <- paste0(out, "Subreprezentare SERIOASĂ (sub 0,5/k, sub jumătate din cota echitabilă): ",
                        paste(grps, collapse = ", "), "\n")
       }
       if (length(moderate) > 0) {
@@ -113,7 +113,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
     }
   }
   
-  # --- Analiza generală ---
+  #Analiza generală 
   if (!is.null(mr) && !is.null(mr$summary)) {
     s_lbl <- if (!is.null(ctx) && !is.null(ctx$sensitive)) ctx$sensitive else "atribut sensibil"
     t_lbl <- if (!is.null(ctx) && !is.null(ctx$target))    ctx$target    else "target"
@@ -121,7 +121,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
     shown <- if (length(grp_names) > 15)
       c(grp_names[1:15], sprintf("(+%d altele)", length(grp_names) - 15)) else grp_names
     
-    out <- paste0(out, sprintf("\n=== ANALIZA GENERALĂ ('%s' -> '%s', %d grupuri: %s) ===\n",
+    out <- paste0(out, sprintf("\nANALIZA GENERALĂ ('%s' -> '%s', %d grupuri: %s)\n",
                                s_lbl, t_lbl, length(grp_names), paste(shown, collapse = ", ")))
     
     if (is.null(mr$spd)) {
@@ -166,7 +166,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
       out <- paste0(out, sprintf("SPD = %.4f %s\n", as.numeric(mr$spd),
                                  if (abs(as.numeric(mr$spd)) < 0.1) "[ECHITABIL]" else "[INECHITABIL]"))
       if (!is.null(mr$disparate_impact))
-        out <- paste0(out, sprintf("DI = %.4f — %s\n",
+        out <- paste0(out, sprintf("DI = %.4f - %s\n",
                                    as.numeric(mr$disparate_impact), mr$di_interpretation))
       if (!is.null(mr$risk_ratio))
         out <- paste0(out, sprintf("Risk Ratio = %.4f\n", as.numeric(mr$risk_ratio)))
@@ -174,7 +174,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
   }
   
   if (!is.null(br))
-    out <- paste0(out, sprintf("\nBIAS SCORE GLOBAL: %.4f — %s (efect 70%% + dezechilibru 30%%)\n",
+    out <- paste0(out, sprintf("\nBIAS SCORE GLOBAL: %.4f - %s (efect 70%% + dezechilibru 30%%)\n",
                                as.numeric(br$bias_score), br$severity))
   
   # --- Analiza socio-demografică ---
@@ -202,7 +202,8 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
     
     if (!is.null(socio_res$ref_val) && !is.na(socio_res$ref_val)) {
       ref_lbl <- switch(as.character(socio_res$ref_country),
-                        RO = "Media României (salariu net)", EU = "Media UE (brut)",
+                        RO = "Media României (salariu net)",
+                        RO_BRUT = "Media României (salariu brut)", EU = "Media UE (brut)",
                         DE = "Germania (brut)", FR = "Franța (brut)",
                         HU = "Ungaria (brut)",  BG = "Bulgaria (brut)",
                         as.character(socio_res$ref_country))
@@ -212,7 +213,7 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
     }
   }
   
-  # --- Clustering ---
+  #Clustering
   if (!is.null(cr) && is.null(cr$error)) {
     out <- paste0(out, sprintf("\nCLUSTERING K-MEANS (k=%d, %s rânduri)\n",
                                as.integer(cr$n_clusters),
@@ -242,26 +243,29 @@ build_results_prompt <- function(mr, dal, br, cr, socio_res = NULL, ctx = NULL) 
                                    as.integer(bc$cluster_id), as.numeric(bc$bias_score), bc$severity))
       if (!is.null(bc$analyses)) {
         for (a in bc$analyses) {
-          cd <- if (!is.null(a$cohen_d)) sprintf("%.3f", as.numeric(a$cohen_d)) else "–"
+          cd <- if (!is.null(a$cohen_d)) sprintf("%.3f", as.numeric(a$cohen_d)) else "n/a"
           lb <- if (!is.null(a$cohen_d_label)) as.character(a$cohen_d_label) else ""
           pd <- if (!is.null(a$pct_diff)) sprintf(", diferență=%.1f%%", as.numeric(a$pct_diff)) else ""
-          out <- paste0(out, sprintf("    %s: Cohen's d=%s (%s)%s\n",
-                                     as.character(a$attribute), cd, lb, pd))
+          is_eta  <- (!is.null(a$metric) && identical(as.character(a$metric), "eta2")) ||
+            grepl("Multi-grup|η²", lb)
+          metric_name <- if (is_eta) "eta patrat" else "Cohen's d"
+          out <- paste0(out, sprintf("    %s: %s=%s (%s)%s\n",
+                                     as.character(a$attribute), metric_name, cd, lb, pd))
         }
       }
     }
   }
   
-  # --- Descrierea graficelor vizibile ---
+  #Descrierea graficelor vizibile
   has_mr <- !is.null(mr) && !is.null(mr$summary)
   has_cr <- !is.null(cr) && is.null(cr$error)
   if (has_mr || has_cr) {
-    out <- paste0(out, "\n=== GRAFICE VIZIBILE ÎN APLICAȚIE ===\n")
+    out <- paste0(out, "\nGRAFICE VIZIBILE ÎN APLICAȚIE\n")
     if (has_mr) {
       s_lbl <- if (!is.null(ctx) && !is.null(ctx$sensitive)) ctx$sensitive else "atributul sensibil"
       t_lbl <- if (!is.null(ctx) && !is.null(ctx$target))    ctx$target    else "target"
       out <- paste0(out, sprintf(
-        "- Tab 'Vizualizare': boxplot, grafic de densitate și barplot al diferențelor față de media globală — toate pentru '%s' împărțit pe grupurile lui '%s'.\n",
+        "- Tab 'Vizualizare': boxplot, grafic de densitate și barplot al diferențelor față de media globală, toate pentru '%s' împărțit pe grupurile lui '%s'.\n",
         t_lbl, s_lbl))
     }
     if (has_cr) {
@@ -299,7 +303,7 @@ call_ollama <- function(messages, model = LLM_DEFAULT_MODEL, url = LLM_DEFAULT_U
       url  = paste0(url, "/api/chat"),
       body = jsonlite::toJSON(body, auto_unbox = TRUE),
       httr::content_type_json(),
-      httr::timeout(250)
+      httr::timeout(300)
     )
     if (httr::status_code(resp) != 200)
       return(list(error = paste("Eroare Ollama:", httr::status_code(resp))))

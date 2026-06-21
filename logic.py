@@ -5,9 +5,7 @@ import re
 import math
 
 
-# ---------------------------------------------------------------------------
 # Utilitar intern
-# ---------------------------------------------------------------------------
 
 def _load_file(file_path):
     fp = str(file_path).strip()
@@ -45,10 +43,7 @@ def _detect_success_value(vals):
     # Fallback: ultima valoare sortată alfabetic
     return sorted(vals, key=str)[-1]
 
-
-# ---------------------------------------------------------------------------
-# FR-01: Profilare date
-# ---------------------------------------------------------------------------
+#Profilare date
 
 def profile_data(file_path):
     try:
@@ -90,10 +85,7 @@ def profile_data(file_path):
         "n_cols": int(df.shape[1])
     }
 
-
-# ---------------------------------------------------------------------------
 # FR-05: Dezechilibru distributional și outlieri
-# ---------------------------------------------------------------------------
 
 def compute_distribution_alerts(file_path, col):
     try:
@@ -131,7 +123,7 @@ def compute_group_imbalance(file_path, col):
     except Exception as e:
         return []
 
-        counts = df[col].value_counts(normalize=True)
+    counts = df[col].value_counts(normalize=True)
     k = len(counts)
     if k == 0:
         return []
@@ -146,10 +138,7 @@ def compute_group_imbalance(file_path, col):
             alerts.append({"group": str(group), "pct": round(p * 100, 2), "severity": "moderate"})
     return alerts
 
-
-# ---------------------------------------------------------------------------
-# FR-04: Metrici de disparitate - target numeric
-# ---------------------------------------------------------------------------
+#Metrici de disparitate (target numeric)
 
 def compute_numeric_metrics(file_path, sensitive_col, target_col):
     try:
@@ -208,10 +197,7 @@ def compute_numeric_metrics(file_path, sensitive_col, target_col):
 
     return result
 
-
-# ---------------------------------------------------------------------------
-# FR-04: Metrici de disparitate - target binar
-# ---------------------------------------------------------------------------
+#Metrici de disparitate - target binar
 
 def compute_binary_metrics(file_path, sensitive_col, target_col):
     try:
@@ -261,10 +247,7 @@ def compute_binary_metrics(file_path, sensitive_col, target_col):
 
     return result
 
-
-# ---------------------------------------------------------------------------
-# FR-06: Bias Score
-# ---------------------------------------------------------------------------
+# Bias Score propriu
 
 def compute_bias_score(effect_size, group_proportions_list):
     effect_size = float(effect_size)
@@ -290,10 +273,7 @@ def compute_bias_score(effect_size, group_proportions_list):
         "imbalance_component": round(imbalance_penalty, 4)
     }
 
-
-# ---------------------------------------------------------------------------
 # Utilități statistice (fără scipy, implementare pură numpy)
-# ---------------------------------------------------------------------------
 
 def _welch_ttest(a, b):
     n1, n2 = len(a), len(b)
