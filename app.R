@@ -1,3 +1,4 @@
+# shiny::runApp("C:/Users/pelle/OneDrive/Desktop/lic-test", port = 3838, launch.browser = FALSE) - pentru testarea web, trebe sa pornesc si aplicatia in paralel
 # app.R - Dashboard Interactiv pentru Detectarea Disparităților
 options(shiny.maxRequestSize = 50 * 1024^2)
 # Arhitectură: R Shiny (UI + server reactiv) + Python via reticulate (procesare date)

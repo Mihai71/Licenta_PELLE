@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="../res/karate-report.css"/>
+    <link rel="stylesheet" href="../res/prism-karate.css"/>
+    <link rel="icon" href="../res/favicon.ico"/>
+    <!-- data-manual: content is injected by Alpine after load, so we highlight on
+         insert via KarateReport._highlightCode rather than Prism's auto-run. -->
+    <script src="../res/prism.min.js" data-manual></script>
+    <script src="../res/alpine.min.js" defer></script>
+    <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('karate-theme') || 'light');</script>
+    
+    <title>Karate Feature</title>
+</head>
+<body class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans antialiased" x-data="KarateReport.featureData()">
+    <!-- Karate report inline SVG sprite (Heroicons v2, MIT). Spliced into the KARATE_ICONS placeholder by HtmlReportWriter. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+
+    <!-- Status: passed -->
+    <symbol id="icon-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </symbol>
+
+    <!-- Status: failed -->
+    <symbol id="icon-x-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </symbol>
+
+    <!-- Status: skipped -->
+    <symbol id="icon-minus-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75h6m6 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </symbol>
+
+    <!-- Sort indicator: ascending -->
+    <symbol id="icon-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+    </symbol>
+
+    <!-- Sort indicator: descending / row expanded -->
+    <symbol id="icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </symbol>
+
+    <!-- Row collapsed (replaces the unicode ▶ used in the current templates) -->
+    <symbol id="icon-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+    </symbol>
+
+    <!-- Theme toggle: switch to light -->
+    <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+    </symbol>
+
+    <!-- Theme toggle: switch to dark -->
+    <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+    </symbol>
+
+    <!-- Enterprise CTA: sparkle -->
+    <symbol id="icon-sparkle" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2zm6 12l.8 2.7L21.5 18l-2.7.8L18 21.5l-.8-2.7L14.5 18l2.7-.8L18 14.5z"/>
+    </symbol>
+
+    <!-- Enterprise CTA: right arrow -->
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
+    </symbol>
+
+    <!-- Hero meta: clock -->
+    <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+    </symbol>
+
+    <!-- Hero meta: server / env -->
+    <symbol id="icon-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3V8.25a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3m-13.5 0v3a3 3 0 0 0 3 3h7.5a3 3 0 0 0 3-3v-3M7.5 11.25h.008v.008H7.5v-.008Z"/>
+    </symbol>
+
+    <!-- Hero meta: cpu / threads -->
+    <symbol id="icon-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12v8.25a2.25 2.25 0 0 1-2.25 2.25H5.25a2.25 2.25 0 0 1-2.25-2.25V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25"/>
+    </symbol>
+
+</svg>
+
+    <nav class="fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-brand-navbar text-slate-900 dark:text-white border-b border-slate-200 dark:border-transparent h-14">
+        <a class="flex items-center gap-2 font-medium min-w-0" href="../karate-summary.html">
+            <img src="../res/karate-logo.svg" alt="Karate" height="32" class="h-8 shrink-0"/>
+            <span class="truncate" x-text="featureSimpleName">Feature</span>
+        </a>
+        <div class="flex items-center gap-4 shrink-0">
+            <a class="text-sm text-slate-600 hover:text-slate-900 dark:text-white/80 dark:hover:text-white" href="../karate-summary.html">Summary</a>
+            
+            <button class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-white/10" @click="toggleTheme()" title="Toggle theme">
+                <svg x-show="theme === 'light'" class="w-4 h-4"><use href="#icon-moon"/></svg>
+                <svg x-show="theme === 'dark'" class="w-4 h-4"><use href="#icon-sun"/></svg>
+            </button>
+            <span class="hidden sm:inline-block w-px h-5 bg-slate-300 dark:bg-white/20"></span>
+            <a href="https://karatelabs.io/karate-enterprise?utm_source=karate-os&utm_medium=report&utm_campaign=enterprise-cta&utm_content=feature"
+               target="_blank" rel="noopener"
+               class="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-accent text-white hover:bg-accent-dark transition-colors"
+               title="Karate Open Source vs Karate Enterprise — see what's included">
+                <svg class="w-3.5 h-3.5"><use href="#icon-sparkle"/></svg>
+                <span><span class="hidden md:inline">Try </span>Karate Enterprise</span>
+                <svg class="w-3 h-3 transition-transform group-hover:translate-x-0.5"><use href="#icon-arrow-right"/></svg>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Sticky left sidebar -->
+    <nav class="hidden md:block fixed top-14 bottom-0 left-0 w-56 overflow-y-auto border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 py-3">
+        <div class="px-3 mb-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Scenarios</div>
+        <!-- Filter chips: All / Failed. Hidden when there are no failures
+             (one-state filter is just noise). -->
+        <div class="px-3 mb-2 flex gap-1.5" x-show="heroCounts.failed > 0">
+            <button type="button" @click="sidebarFilter = 'all'"
+                    class="px-2 py-0.5 text-xs rounded-full border transition-colors"
+                    :class="sidebarFilter === 'all'
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-accent'">
+                All <span class="opacity-75" x-text="'(' + data.scenarios.length + ')'"></span>
+            </button>
+            <button type="button" @click="sidebarFilter = 'failed'"
+                    class="px-2 py-0.5 text-xs rounded-full border transition-colors"
+                    :class="sidebarFilter === 'failed'
+                        ? 'bg-red-600 text-white border-red-600'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-red-500'">
+                Failed <span class="opacity-75" x-text="'(' + heroCounts.failed + ')'"></span>
+            </button>
+        </div>
+        <template x-for="scenario in filteredSidebar" :key="scenario.refId">
+            <a class="block px-3 py-1.5 text-xs border-l-2 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-accent"
+               :class="scenario.skipped
+                   ? 'text-amber-600 dark:text-amber-400'
+                   : (scenario.passed ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400')"
+               :href="'#' + scenario.refId"
+               :title="scenario.name">
+                <span class="font-bold" x-text="scenario.refId"></span>
+                <span x-text="scenario.name ? ' ' + truncate(scenario.name, 20) : ''"></span>
+            </a>
+        </template>
+    </nav>
+
+    <!-- Main content -->
+    <main class="md:ml-56 mt-14 p-4">
+        <nav aria-label="breadcrumb" class="mb-3 text-sm">
+            <a class="text-accent hover:underline" href="../karate-summary.html">Summary</a>
+            <span class="mx-2 text-slate-400">/</span>
+            <span class="text-slate-700 dark:text-slate-300" x-text="data.name || data.path">Feature</span>
+        </nav>
+
+        <!-- Hero -->
+        <section class="mb-5">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-medium" :class="heroStatus.pillCls">
+                <span class="w-1.5 h-1.5 rounded-full" :class="heroStatus.dotCls"></span>
+                <span x-text="heroStatus.label"></span>
+            </div>
+            <h1 class="mt-3 text-xl md:text-2xl font-semibold tracking-tight" x-text="data.name || 'Feature'">Feature Name</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1" x-text="data.path">path/to/feature</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <span x-show="data.reportDate" class="inline-flex items-center gap-1.5"><svg class="w-4 h-4"><use href="#icon-clock"/></svg> <span x-text="data.reportDate">Date</span></span>
+                <span class="inline-flex items-center gap-1.5"><svg class="w-4 h-4"><use href="#icon-check-circle"/></svg> <span x-text="heroCounts.passed"></span> passed</span>
+                <span x-show="heroCounts.failed > 0" class="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400"><svg class="w-4 h-4"><use href="#icon-x-circle"/></svg> <span x-text="heroCounts.failed"></span> failed</span>
+                <span x-show="heroCounts.skipped > 0" class="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400"><svg class="w-4 h-4"><use href="#icon-minus-circle"/></svg> <span x-text="heroCounts.skipped"></span> skipped</span>
+                <span x-show="data.durationMillis" class="inline-flex items-center gap-1.5"><svg class="w-4 h-4"><use href="#icon-clock"/></svg> <span x-text="data.durationMillis"></span> ms</span>
+            </div>
+        </section>
+
+        <!-- Scenarios -->
+        <template x-for="scenario in data.scenarios" :key="scenario.refId">
+            <div class="rounded-lg border border-slate-200 dark:border-slate-700 mb-4 overflow-hidden" :id="scenario.refId">
+                <div class="flex justify-between items-center px-3 py-2"
+                     :class="scenario.skipped
+                         ? 'bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900'
+                         : (scenario.passed
+                             ? 'bg-green-50 dark:bg-green-950/30 border-b border-green-200 dark:border-green-900'
+                             : 'bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-900')">
+                    <span class="flex items-center gap-2 flex-wrap min-w-0">
+                        <span class="font-bold" x-text="scenario.refId"></span>
+                        <span x-text="scenario.name"></span>
+                        <template x-if="scenario.isOutlineExample">
+                            <span class="inline-block px-1.5 py-0.5 text-[0.65rem] rounded bg-accent text-white">Outline</span>
+                        </template>
+                        <template x-for="tag in scenario.tags || []" :key="tag">
+                            <span class="inline-block px-1.5 py-0.5 text-[0.65rem] rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300" x-text="tag"></span>
+                        </template>
+                    </span>
+                    <span class="flex items-center gap-2 shrink-0">
+                        <span class="text-xs text-slate-500 dark:text-slate-400" x-text="scenario.durationMillis + ' ms'"></span>
+                        <span class="inline-block px-2 py-0.5 text-[0.65rem] font-semibold rounded text-white"
+                              :class="statusOf(scenario).cls"
+                              x-text="statusOf(scenario).label"></span>
+                    </span>
+                </div>
+                <div x-html="renderSteps(scenario.steps)"></div>
+                <template x-if="scenario.error && !scenario.steps?.some(s => s.error)">
+                    <div class="bg-red-50 dark:bg-red-950/40 border-t border-red-200 dark:border-red-900 px-3 py-2">
+                        <pre class="m-0 text-xs text-red-700 dark:text-red-300 whitespace-pre-wrap" x-text="scenario.error"></pre>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </main>
+
+    <!-- Shared screenshot lightbox. Click any image embed to open. Backdrop click
+         closes (the onclick guard checks event.target === dialog so clicks inside
+         the dialog content don't dismiss). KarateReport.openLightbox(src, name)
+         populates and shows it. -->
+    <dialog id="img-lightbox"
+            class="rounded-lg p-0 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 backdrop:bg-black/70 max-w-[90vw] max-h-[90vh]"
+            onclick="if(event.target===this) this.close()">
+        <div class="relative">
+            <button class="absolute top-2 right-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow"
+                    onclick="this.closest('dialog').close()"
+                    aria-label="Close">
+                <span class="text-lg leading-none">&times;</span>
+            </button>
+            <img id="img-lightbox-img" src="" alt="" class="block max-w-[90vw] max-h-[80vh]"/>
+            <div id="img-lightbox-caption" class="px-4 py-2 text-xs border-t border-slate-200 dark:border-slate-700 font-mono text-slate-600 dark:text-slate-300"></div>
+        </div>
+    </dialog>
+
+    <footer class="md:ml-56 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400 py-4 mt-6">
+        Generated by <a href="https://karatelabs.io" target="_blank" rel="noopener" class="hover:text-accent">Karate <span x-text="data.karateVersion">2.0</span></a>
+        <span class="mx-1.5">·</span>
+        <span x-text="data.reportDate"></span>
+        <span class="mx-1.5">·</span>
+        <a href="https://docs.karatelabs.io/" target="_blank" rel="noopener" class="hover:text-accent">Documentation</a>
+    </footer>
+
+    <script src="../res/karate-report.js"></script>
+    <script id="karate-data" type="application/json">{
+  "path": "clustering_ess.feature",
+  "name": "Flux clustering K-Means (ESS) - elbow + clustering + atribut extra cntry",
+  "relativePath": "clustering_ess.feature",
+  "passed": true,
+  "durationMillis": 3039,
+  "reportDate": "2026-06-24 01:59:27",
+  "karateVersion": "2.1.0",
+  "scenarios": [
+    {
+      "name": "Upload ESS, elbow, clustering k=3, apoi reclustering cu cntry",
+      "line": 7,
+      "passed": true,
+      "durationMillis": 3037,
+      "startTime": 1782255567928,
+      "endTime": 1782255570965,
+      "refId": "[1:7]",
+      "sectionIndex": 1,
+      "exampleIndex": -1,
+      "isOutlineExample": false,
+      "thread": "thread-3",
+      "tags": [
+        "@api"
+      ],
+      "skipped": false,
+      "steps": [
+        {
+          "prefix": "*",
+          "keyword": "url",
+          "text": "baseUrl",
+          "line": 5,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Given",
+          "keyword": "path",
+          "text": "'upload'",
+          "line": 9,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "multipart file",
+          "text": "file = { read: 'file:C:/Users/pelle/Downloads/ESS10e03_3-ESS10SCe03_2-ESS11custom/ESS_training_clean.csv', filename: 'ESS_training_clean.csv', contentType: 'text/csv' }",
+          "line": 10,
+          "status": "passed",
+          "durationMillis": 1,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "When",
+          "keyword": "method",
+          "text": "post",
+          "line": 11,
+          "status": "passed",
+          "durationMillis": 54,
+          "hasLogs": true,
+          "logSegments": [
+            {
+              "text": "request:\n1 > POST http://127.0.0.1:8000/upload\n1 > Content-Type: multipart/form-data; boundary=509db04cbf5a979d\n1 > Host: 127.0.0.1:8000\n1 > Content-Length: 4490595\n1 > Connection: keep-alive\n1 > User-Agent: Apache-HttpClient/5.6.1 (Java/25.0.1)\n\nMixed: content-disposition: form-data; name=\"file\"; filename=\"ESS_training_clean.csv\"\r\ncontent-type: text/csv; charset=UTF-8\r\ncontent-length: 4490385\r\nCompleted: true\r\nIsInMemory: false\r\nRealFile: C:\\Users\\pelle\\Downloads\\ESS10e03_3-ESS10SCe03_2-ESS11custom\\ESS_training_clean.csv DeleteAfter: false\n\n\nresponse time in milliseconds: 33\n1 < 200 POST http://127.0.0.1:8000/upload\n1 < Access-Control-Allow-Origin: *\n1 < Content-Length: 29\n1 < Date: Tue, 23 Jun 2026 22:59:27 GMT\n1 < Content-Type: application/json\n"
+            },
+            {
+              "lang": "json",
+              "code": "{\n  \"file_id\": \"f_015927_o388kn\"\n}"
+            },
+            {
+              "text": "\n\nPOST http://127.0.0.1:8000/upload\n200 (33 ms)\n"
+            }
+          ],
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Then",
+          "keyword": "status",
+          "text": "200",
+          "line": 12,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "*",
+          "keyword": "def",
+          "text": "fid = response.file_id",
+          "line": 13,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Given",
+          "keyword": "path",
+          "text": "'elbow'",
+          "line": 16,
+          "comments": [
+            "# 1) Metoda Elbow -> sugestie k"
+          ],
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "file_id = fid",
+          "line": 17,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_sex = 'gndr'",
+          "line": 18,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_age = 'agea'",
+          "line": 19,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_edu = 'eisced'",
+          "line": 20,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_env = 'domicil'",
+          "line": 21,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_income = 'hinctnta'",
+          "line": 22,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "When",
+          "keyword": "method",
+          "text": "post",
+          "line": 23,
+          "status": "passed",
+          "durationMillis": 618,
+          "hasLogs": true,
+          "logSegments": [
+            {
+              "text": "request:\n2 > POST http://127.0.0.1:8000/elbow\n2 > Content-Type: application/x-www-form-urlencoded\n2 > Host: 127.0.0.1:8000\n2 > Content-Length: 100\n2 > Connection: keep-alive\n2 > User-Agent: Apache-HttpClient/5.6.1 (Java/25.0.1)\nfile_id=f_015927_o388kn&col_sex=gndr&col_age=agea&col_edu=eisced&col_env=domicil&col_income=hinctnta\n\nresponse time in milliseconds: 616\n2 < 200 POST http://127.0.0.1:8000/elbow\n2 < Access-Control-Allow-Origin: *\n2 < Content-Length: 217\n2 < Date: Tue, 23 Jun 2026 22:59:28 GMT\n2 < Content-Type: application/json\n"
+            },
+            {
+              "lang": "json",
+              "code": "{\n  \"error\": {\n  },\n  \"elbow_data\": [\n    {\n      \"k\": 2,\n      \"inertia\": 544.59\n    },\n    {\n      \"k\": 3,\n      \"inertia\": 418.83\n    },\n    {\n      \"k\": 4,\n      \"inertia\": 353.46\n    },\n    {\n      \"k\": 5,\n      \"inertia\": 312.67\n    },\n    {\n      \"k\": 6,\n      \"inertia\": 289.1\n    },\n    {\n      \"k\": 7,\n      \"inertia\": 270.79\n    },\n    {\n      \"k\": 8,\n      \"inertia\": 253.42\n    }\n  ],\n  \"suggested_k\": 3\n}"
+            },
+            {
+              "text": "\n\nPOST http://127.0.0.1:8000/elbow\n200 (616 ms)\n"
+            }
+          ],
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Then",
+          "keyword": "status",
+          "text": "200",
+          "line": 24,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "match",
+          "text": "response.suggested_k == '#number'",
+          "line": 25,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "match",
+          "text": "response.elbow_data == '#[_ > 0]'",
+          "line": 26,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Given",
+          "keyword": "path",
+          "text": "'clustering'",
+          "line": 29,
+          "comments": [
+            "# 2) Clustering k=3"
+          ],
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "file_id = fid",
+          "line": 30,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_sex = 'gndr'",
+          "line": 31,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_age = 'agea'",
+          "line": 32,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_edu = 'eisced'",
+          "line": 33,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_env = 'domicil'",
+          "line": 34,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_income = 'hinctnta'",
+          "line": 35,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "n_clusters = 3",
+          "line": 36,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "When",
+          "keyword": "method",
+          "text": "post",
+          "line": 37,
+          "status": "passed",
+          "durationMillis": 1097,
+          "hasLogs": true,
+          "logSegments": [
+            {
+              "text": "request:\n3 > POST http://127.0.0.1:8000/clustering\n3 > Content-Type: application/x-www-form-urlencoded\n3 > Host: 127.0.0.1:8000\n3 > Content-Length: 113\n3 > Connection: keep-alive\n3 > User-Agent: Apache-HttpClient/5.6.1 (Java/25.0.1)\nfile_id=f_015927_o388kn&col_sex=gndr&col_age=agea&col_edu=eisced&col_env=domicil&col_income=hinctnta&n_clusters=3\n\nresponse time in milliseconds: 1091\n3 < 200 POST http://127.0.0.1:8000/clustering\n3 < Access-Control-Allow-Origin: *\n3 < Content-Length: 3514\n3 < Date: Tue, 23 Jun 2026 22:59:29 GMT\n3 < Content-Type: application/json\n"
+            },
+            {
+              "lang": "json",
+              "code": "{\n  \"error\": {\n  },\n  \"n_rows_used\": 84274,\n  \"n_rows_total\": 86292,\n  \"n_clusters\": 3,\n  \"inertia\": 7156.88,\n  \"pc_labels\": [\n    \"PC1 (54.7%): Venit + Vârstă\",\n    \"PC2 (27.7%): Vârstă + Venit\"\n  ],\n  \"profiles\": [\n    {\n      \"cluster_id\": 0,\n      \"n\": 29069,\n      \"pct\": 34.5,\n      \"age_mean\": 68.4,\n      \"age_median\": 68,\n      \"female_pct\": 56.8,\n      \"male_pct\": 43.2,\n      \"edu_mean\": 3.73,\n      \"edu_is_text\": false,\n      \"env_mean\": 3.06,\n      \"income_mean\": 3.34,\n      \"income_median\": 3,\n      \"income_min\": 1,\n      \"income_max\": 7,\n      \"income_dist\": {\n        \"1\": 4700,\n        \"2\": 5520,\n        \"3\": 5594,\n        \"4\": 5279,\n        \"5\": 4770,\n        \"6\": 2862,\n        \"7\": 344\n      },\n      \"label\": \"Venit mic, Seniori\"\n    },\n    {\n      \"cluster_id\": 1,\n      \"n\": 19153,\n      \"pct\": 22.7,\n      \"age_mean\": 34,\n      \"age_median\": 34,\n      \"female_pct\": 55.6,\n      \"male_pct\": 44.4,\n      \"edu_mean\": 4.43,\n      \"edu_is_text\": false,\n      \"env_mean\": 2.74,\n      \"income_mean\": 3.78,\n      \"income_median\": 4,\n      \"income_min\": 1,\n      \"income_max\": 7,\n      \"income_dist\": {\n        \"1\": 2060,\n        \"2\": 2586,\n        \"3\": 3278,\n        \"4\": 3877,\n        \"5\": 4420,\n        \"6\": 2842,\n        \"7\": 90\n      },\n      \"label\": \"Venit mic, Tineri\"\n    },\n    {\n      \"cluster_id\": 2,\n      \"n\": 36052,\n      \"pct\": 42.8,\n      \"age_mean\": 46.9,\n      \"age_median\": 47,\n      \"female_pct\": 48.4,\n      \"male_pct\": 51.6,\n      \"edu_mean\": 5.07,\n      \"edu_is_text\": false,\n      \"env_mean\": 2.79,\n      \"income_mean\": 8.16,\n      \"income_median\": 8,\n      \"income_min\": 6,\n      \"income_max\": 10,\n      \"income_dist\": {\n        \"6\": 3556,\n        \"7\": 8932,\n        \"8\": 8897,\n        \"9\": 7387,\n        \"10\": 7280\n      },\n      \"label\": \"Venit mare, Adulți\"\n    }\n  ],\n  \"bias_per_cluster\": [\n    {\n      \"cluster_id\": 0,\n      \"analyses\": [\n        {\n          \"attribute\": \"Sex\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 3.5749,\n            \"2\": 3.1571,\n            \"9\": 4.0282\n          },\n          \"n_per_group\": {\n            \"1\": 12526,\n            \"2\": 16472,\n            \"9\": 71\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0167,\n          \"cohen_d_label\": \"Mic\"\n        },\n        {\n          \"attribute\": \"Vârstă\",\n          \"groups\": [\n            \"35-55\",\n            \">55\"\n          ],\n          \"means\": {\n            \"35-55\": 2.9297,\n            \">55\": 3.3841\n          },\n          \"n_per_group\": {\n            \"35-55\": 2873,\n            \">55\": 26196\n          },\n          \"metric\": \"d\",\n          \"cohen_d\": 0.2809,\n          \"mean_diff\": -0.45,\n          \"pct_diff\": -13.4,\n          \"cohen_d_label\": \"Mic\"\n        },\n        {\n          \"attribute\": \"Origine/Mediu\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"3\",\n            \"4\",\n            \"5\",\n            \"7\",\n            \"8\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 3.3553,\n            \"2\": 3.5606,\n            \"3\": 3.3619,\n            \"4\": 3.2371,\n            \"5\": 3.4766,\n            \"7\": 3,\n            \"8\": 3.5,\n            \"9\": 2.9302\n          },\n          \"n_per_group\": {\n            \"1\": 5105,\n            \"2\": 2740,\n            \"3\": 8672,\n            \"4\": 10778,\n            \"5\": 1706,\n            \"7\": 11,\n            \"8\": 14,\n            \"9\": 43\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0038,\n          \"cohen_d_label\": \"Neglijabil\"\n        }\n      ],\n      \"bias_score\": 0.1966,\n      \"severity\": \"Neglijabil\"\n    },\n    {\n      \"cluster_id\": 1,\n      \"analyses\": [\n        {\n          \"attribute\": \"Sex\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 3.8303,\n            \"2\": 3.7358,\n            \"9\": 3.75\n          },\n          \"n_per_group\": {\n            \"1\": 8509,\n            \"2\": 10636,\n            \"9\": 8\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 9.0E-4,\n          \"cohen_d_label\": \"Neglijabil\"\n        },\n        {\n          \"attribute\": \"Vârstă\",\n          \"groups\": [\n            \"35-55\",\n            \"<35\"\n          ],\n          \"means\": {\n            \"35-55\": 3.7278,\n            \"<35\": 3.8185\n          },\n          \"n_per_group\": {\n            \"35-55\": 8593,\n            \"<35\": 10560\n          },\n          \"metric\": \"d\",\n          \"cohen_d\": 0.0574,\n          \"mean_diff\": -0.09,\n          \"pct_diff\": -2.4,\n          \"cohen_d_label\": \"Neglijabil\"\n        },\n        {\n          \"attribute\": \"Origine/Mediu\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"3\",\n            \"4\",\n            \"5\",\n            \"7\",\n            \"8\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 3.7467,\n            \"2\": 3.7962,\n            \"3\": 3.7751,\n            \"4\": 3.7788,\n            \"5\": 3.9632,\n            \"7\": 4.8,\n            \"8\": 3.2,\n            \"9\": 5.1111\n          },\n          \"n_per_group\": {\n            \"1\": 4946,\n            \"2\": 2017,\n            \"3\": 6008,\n            \"4\": 5533,\n            \"5\": 625,\n            \"7\": 5,\n            \"8\": 10,\n            \"9\": 9\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0011,\n          \"cohen_d_label\": \"Neglijabil\"\n        }\n      ],\n      \"bias_score\": 0.0402,\n      \"severity\": \"Neglijabil\"\n    },\n    {\n      \"cluster_id\": 2,\n      \"analyses\": [\n        {\n          \"attribute\": \"Sex\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 8.2229,\n            \"2\": 8.1009,\n            \"9\": 8.1053\n          },\n          \"n_per_group\": {\n            \"1\": 18582,\n            \"2\": 17451,\n            \"9\": 19\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0023,\n          \"cohen_d_label\": \"Neglijabil\"\n        },\n        {\n          \"attribute\": \"Vârstă\",\n          \"groups\": [\n            \"35-55\",\n            \"<35\",\n            \">55\"\n          ],\n          \"means\": {\n            \"35-55\": 8.0886,\n            \"<35\": 8.4071,\n            \">55\": 8.0844\n          },\n          \"n_per_group\": {\n            \"35-55\": 16684,\n            \"<35\": 8645,\n            \">55\": 10723\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0115,\n          \"cohen_d_label\": \"Mic\"\n        },\n        {\n          \"attribute\": \"Origine/Mediu\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"3\",\n            \"4\",\n            \"5\",\n            \"7\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 8.2652,\n            \"2\": 8.3333,\n            \"3\": 8.1135,\n            \"4\": 8.0626,\n            \"5\": 8.1192,\n            \"7\": 7.3333,\n            \"9\": 8.1622\n          },\n          \"n_per_group\": {\n            \"1\": 8544,\n            \"2\": 4780,\n            \"3\": 10321,\n            \"4\": 10699,\n            \"5\": 1661,\n            \"7\": 6,\n            \"9\": 37\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0063,\n          \"cohen_d_label\": \"Neglijabil\"\n        }\n      ],\n      \"bias_score\": 0.008,\n      \"severity\": \"Neglijabil\"\n    }\n  ]\n}"
+            },
+            {
+              "text": "\n\nPOST http://127.0.0.1:8000/clustering\n200 (1091 ms)\n"
+            }
+          ],
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Then",
+          "keyword": "status",
+          "text": "200",
+          "line": 38,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "match",
+          "text": "response.n_clusters == 3",
+          "line": 39,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "match",
+          "text": "response.profiles == '#[3]'",
+          "line": 40,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "match",
+          "text": "response.bias_per_cluster == '#[3]'",
+          "line": 41,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Given",
+          "keyword": "path",
+          "text": "'clustering'",
+          "line": 44,
+          "comments": [
+            "# 3) Reclustering cu atribut suplimentar: cntry (tara)"
+          ],
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "file_id = fid",
+          "line": 45,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_sex = 'gndr'",
+          "line": 46,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_age = 'agea'",
+          "line": 47,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_edu = 'eisced'",
+          "line": 48,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_env = 'domicil'",
+          "line": 49,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_income = 'hinctnta'",
+          "line": 50,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "n_clusters = 3",
+          "line": 51,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "form field",
+          "text": "col_extra_json = '[\"cntry\"]'",
+          "line": 52,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "When",
+          "keyword": "method",
+          "text": "post",
+          "line": 53,
+          "status": "passed",
+          "durationMillis": 1259,
+          "hasLogs": true,
+          "logSegments": [
+            {
+              "text": "request:\n4 > POST http://127.0.0.1:8000/clustering\n4 > Content-Type: application/x-www-form-urlencoded\n4 > Host: 127.0.0.1:8000\n4 > Content-Length: 146\n4 > Connection: keep-alive\n4 > User-Agent: Apache-HttpClient/5.6.1 (Java/25.0.1)\nfile_id=f_015927_o388kn&col_sex=gndr&col_age=agea&col_edu=eisced&col_env=domicil&col_income=hinctnta&n_clusters=3&col_extra_json=%5B%22cntry%22%5D\n\nresponse time in milliseconds: 1255\n4 < 200 POST http://127.0.0.1:8000/clustering\n4 < Access-Control-Allow-Origin: *\n4 < Content-Length: 3569\n4 < Date: Tue, 23 Jun 2026 22:59:30 GMT\n4 < Content-Type: application/json\n"
+            },
+            {
+              "lang": "json",
+              "code": "{\n  \"error\": {\n  },\n  \"n_rows_used\": 84274,\n  \"n_rows_total\": 86292,\n  \"n_clusters\": 3,\n  \"inertia\": 13301.39,\n  \"pc_labels\": [\n    \"PC1 (38.0%): Venit + cntry\",\n    \"PC2 (31.7%): cntry + Venit\"\n  ],\n  \"profiles\": [\n    {\n      \"cluster_id\": 0,\n      \"n\": 31251,\n      \"pct\": 37.1,\n      \"age_mean\": 59.9,\n      \"age_median\": 64,\n      \"female_pct\": 58.4,\n      \"male_pct\": 41.6,\n      \"edu_mean\": 3.74,\n      \"edu_is_text\": false,\n      \"env_mean\": 2.99,\n      \"income_mean\": 2.7,\n      \"income_median\": 3,\n      \"income_min\": 1,\n      \"income_max\": 7,\n      \"income_dist\": {\n        \"1\": 6744,\n        \"2\": 7873,\n        \"3\": 7864,\n        \"4\": 5945,\n        \"5\": 2451,\n        \"6\": 370,\n        \"7\": 4\n      },\n      \"label\": \"Venit mic, Seniori\"\n    },\n    {\n      \"cluster_id\": 1,\n      \"n\": 22403,\n      \"pct\": 26.6,\n      \"age_mean\": 45.8,\n      \"age_median\": 45,\n      \"female_pct\": 49.8,\n      \"male_pct\": 50.2,\n      \"edu_mean\": 4.86,\n      \"edu_is_text\": false,\n      \"env_mean\": 2.79,\n      \"income_mean\": 6.95,\n      \"income_median\": 7,\n      \"income_min\": 1,\n      \"income_max\": 10,\n      \"income_dist\": {\n        \"1\": 16,\n        \"2\": 228,\n        \"3\": 680,\n        \"4\": 1746,\n        \"5\": 3039,\n        \"6\": 3593,\n        \"7\": 3964,\n        \"8\": 3433,\n        \"9\": 2888,\n        \"10\": 2816\n      },\n      \"label\": \"Venit mare, Adulți\"\n    },\n    {\n      \"cluster_id\": 2,\n      \"n\": 30620,\n      \"pct\": 36.3,\n      \"age_mean\": 46.7,\n      \"age_median\": 46,\n      \"female_pct\": 49.6,\n      \"male_pct\": 50.4,\n      \"edu_mean\": 4.9,\n      \"edu_is_text\": false,\n      \"env_mean\": 2.81,\n      \"income_mean\": 7.31,\n      \"income_median\": 7,\n      \"income_min\": 2,\n      \"income_max\": 10,\n      \"income_dist\": {\n        \"2\": 5,\n        \"3\": 328,\n        \"4\": 1465,\n        \"5\": 3700,\n        \"6\": 5297,\n        \"7\": 5398,\n        \"8\": 5464,\n        \"9\": 4499,\n        \"10\": 4464\n      },\n      \"label\": \"Venit mare, Adulți\"\n    }\n  ],\n  \"bias_per_cluster\": [\n    {\n      \"cluster_id\": 0,\n      \"analyses\": [\n        {\n          \"attribute\": \"Sex\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 2.8316,\n            \"2\": 2.6035,\n            \"9\": 3.3898\n          },\n          \"n_per_group\": {\n            \"1\": 12963,\n            \"2\": 18229,\n            \"9\": 59\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0083,\n          \"cohen_d_label\": \"Neglijabil\"\n        },\n        {\n          \"attribute\": \"Vârstă\",\n          \"groups\": [\n            \"35-55\",\n            \"<35\",\n            \">55\"\n          ],\n          \"means\": {\n            \"35-55\": 2.6804,\n            \"<35\": 2.1328,\n            \">55\": 2.8141\n          },\n          \"n_per_group\": {\n            \"35-55\": 6786,\n            \"<35\": 3922,\n            \">55\": 20543\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0299,\n          \"cohen_d_label\": \"Mic\"\n        },\n        {\n          \"attribute\": \"Origine/Mediu\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"3\",\n            \"4\",\n            \"5\",\n            \"7\",\n            \"8\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 2.6383,\n            \"2\": 2.8103,\n            \"3\": 2.7067,\n            \"4\": 2.667,\n            \"5\": 2.9027,\n            \"7\": 2.5455,\n            \"8\": 2.8947,\n            \"9\": 2.7073\n          },\n          \"n_per_group\": {\n            \"1\": 6016,\n            \"2\": 2999,\n            \"3\": 9494,\n            \"4\": 11057,\n            \"5\": 1614,\n            \"7\": 11,\n            \"8\": 19,\n            \"9\": 41\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0027,\n          \"cohen_d_label\": \"Neglijabil\"\n        }\n      ],\n      \"bias_score\": 0.0209,\n      \"severity\": \"Neglijabil\"\n    },\n    {\n      \"cluster_id\": 1,\n      \"analyses\": [\n        {\n          \"attribute\": \"Sex\",\n          \"groups\": [\n            \"1\",\n            \"2\"\n          ],\n          \"means\": {\n            \"1\": 7.0582,\n            \"2\": 6.8335\n          },\n          \"n_per_group\": {\n            \"1\": 11239,\n            \"2\": 11162\n          },\n          \"metric\": \"d\",\n          \"cohen_d\": 0.113,\n          \"mean_diff\": 0.22,\n          \"pct_diff\": 3.3,\n          \"cohen_d_label\": \"Neglijabil\"\n        },\n        {\n          \"attribute\": \"Vârstă\",\n          \"groups\": [\n            \"35-55\",\n            \"<35\",\n            \">55\"\n          ],\n          \"means\": {\n            \"35-55\": 7.1409,\n            \"<35\": 6.6424,\n            \">55\": 6.992\n          },\n          \"n_per_group\": {\n            \"35-55\": 8921,\n            \"<35\": 6743,\n            \">55\": 6739\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.011,\n          \"cohen_d_label\": \"Mic\"\n        },\n        {\n          \"attribute\": \"Origine/Mediu\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"3\",\n            \"4\",\n            \"5\",\n            \"7\",\n            \"8\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 7.0645,\n            \"2\": 7.2988,\n            \"3\": 6.9026,\n            \"4\": 6.7519,\n            \"5\": 6.8446,\n            \"7\": 6.5,\n            \"8\": 6.8571,\n            \"9\": 7.24\n          },\n          \"n_per_group\": {\n            \"1\": 5177,\n            \"2\": 2908,\n            \"3\": 6879,\n            \"4\": 6397,\n            \"5\": 1004,\n            \"7\": 6,\n            \"8\": 7,\n            \"9\": 25\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0079,\n          \"cohen_d_label\": \"Neglijabil\"\n        }\n      ],\n      \"bias_score\": 0.0791,\n      \"severity\": \"Neglijabil\"\n    },\n    {\n      \"cluster_id\": 2,\n      \"analyses\": [\n        {\n          \"attribute\": \"Sex\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 7.4042,\n            \"2\": 7.2106,\n            \"9\": 7\n          },\n          \"n_per_group\": {\n            \"1\": 15415,\n            \"2\": 15168,\n            \"9\": 37\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0029,\n          \"cohen_d_label\": \"Neglijabil\"\n        },\n        {\n          \"attribute\": \"Vârstă\",\n          \"groups\": [\n            \"35-55\",\n            \"<35\",\n            \">55\"\n          ],\n          \"means\": {\n            \"35-55\": 7.5149,\n            \"<35\": 7.0078,\n            \">55\": 7.3062\n          },\n          \"n_per_group\": {\n            \"35-55\": 12443,\n            \"<35\": 8540,\n            \">55\": 9637\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0131,\n          \"cohen_d_label\": \"Mic\"\n        },\n        {\n          \"attribute\": \"Origine/Mediu\",\n          \"groups\": [\n            \"1\",\n            \"2\",\n            \"3\",\n            \"4\",\n            \"5\",\n            \"7\",\n            \"9\"\n          ],\n          \"means\": {\n            \"1\": 7.2728,\n            \"2\": 7.6014,\n            \"3\": 7.2316,\n            \"4\": 7.2603,\n            \"5\": 7.5233,\n            \"7\": 6.8,\n            \"9\": 7.913\n          },\n          \"n_per_group\": {\n            \"1\": 7402,\n            \"2\": 3630,\n            \"3\": 8628,\n            \"4\": 9556,\n            \"5\": 1374,\n            \"7\": 5,\n            \"9\": 23\n          },\n          \"metric\": \"eta2\",\n          \"cohen_d\": 0.0047,\n          \"cohen_d_label\": \"Neglijabil\"\n        }\n      ],\n      \"bias_score\": 0.0092,\n      \"severity\": \"Neglijabil\"\n    }\n  ]\n}"
+            },
+            {
+              "text": "\n\nPOST http://127.0.0.1:8000/clustering\n200 (1255 ms)\n"
+            }
+          ],
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "Then",
+          "keyword": "status",
+          "text": "200",
+          "line": 54,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "match",
+          "text": "response.n_clusters == 3",
+          "line": 55,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        },
+        {
+          "prefix": "And",
+          "keyword": "match",
+          "text": "response.profiles == '#[3]'",
+          "line": 56,
+          "status": "passed",
+          "durationMillis": 0,
+          "hasLogs": false,
+          "hasEmbeds": false,
+          "hasCallResults": false
+        }
+      ]
+    }
+  ]
+}</script>
+</body>
+</html>
