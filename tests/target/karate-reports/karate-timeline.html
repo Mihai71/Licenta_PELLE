@@ -214,18 +214,18 @@
     <script src="res/karate-report.js"></script>
     <script id="karate-data" type="application/json">{
   "env": null,
-  "reportDate": "2026-06-24 14:26:26",
+  "reportDate": "2026-06-27 15:18:26",
   "threads": 1,
   "karateVersion": "2.1.0",
   "summary": {
-    "feature_count": 5,
-    "feature_passed": 5,
+    "feature_count": 1,
+    "feature_passed": 1,
     "feature_failed": 0,
-    "scenario_count": 5,
-    "scenario_passed": 5,
+    "scenario_count": 1,
+    "scenario_passed": 1,
     "scenario_failed": 0,
     "scenario_skipped": 0,
-    "duration_millis": 241906,
+    "duration_millis": 70000,
     "status": "passed"
   },
   "groups": [
@@ -238,92 +238,24 @@
     {
       "id": 1,
       "group": 1,
-      "content": "general_salarii[1:5]",
-      "start": 1782300386115,
-      "end": 1782300386639,
-      "title": "general_salarii[1:5] 14:26:26.115 (525 ms) Upload, profilare si metrici binare pe gen -> promovat",
-      "className": "passed"
-    },
-    {
-      "id": 2,
-      "group": 1,
-      "content": "general_ess[1:6]",
-      "start": 1782300386662,
-      "end": 1782300387051,
-      "title": "general_ess[1:6] 14:26:26.662 (390 ms) Upload ESS curatat si metrici numerice gndr -> hinctnta",
-      "className": "passed"
-    },
-    {
-      "id": 3,
-      "group": 1,
-      "content": "socio_salarii[1:6]",
-      "start": 1782300387056,
-      "end": 1782300387690,
-      "title": "socio_salarii[1:6] 14:26:27.056 (635 ms) Grupare pe varsta, educatie si regiuni pe salariu (in lei)",
-      "className": "passed"
-    },
-    {
-      "id": 4,
-      "group": 1,
-      "content": "clustering_ess[1:7]",
-      "start": 1782300387696,
-      "end": 1782300391690,
-      "title": "clustering_ess[1:7] 14:26:27.696 (3995 ms) Upload ESS, elbow, clustering k=3, apoi reclustering cu cntry",
-      "className": "passed"
-    },
-    {
-      "id": 5,
-      "group": 1,
-      "content": "llm_ess[1:11]",
-      "start": 1782300391696,
-      "end": 1782300627952,
-      "title": "llm_ess[1:11] 14:26:31.696 (236257 ms) Clustering ESS -> interpretare LLM -> intrebare despre bias intersectional",
+      "content": "ui_clustering[1:11]",
+      "start": 1782562706373,
+      "end": 1782562776252,
+      "title": "ui_clustering[1:11] 15:18:26.373 (69880 ms) Elbow -> clustering k -> reclustering cu cntry",
       "className": "passed"
     }
   ],
   "scenarios": [
     {
-      "featureFileName": "general_salarii",
-      "featureHtmlName": "general_salarii",
-      "refId": "[1:5]",
-      "name": "Upload, profilare si metrici binare pe gen -> promovat",
-      "durationMillis": 525,
-      "passed": true
-    },
-    {
-      "featureFileName": "general_ess",
-      "featureHtmlName": "general_ess",
-      "refId": "[1:6]",
-      "name": "Upload ESS curatat si metrici numerice gndr -> hinctnta",
-      "durationMillis": 390,
-      "passed": true
-    },
-    {
-      "featureFileName": "socio_salarii",
-      "featureHtmlName": "socio_salarii",
-      "refId": "[1:6]",
-      "name": "Grupare pe varsta, educatie si regiuni pe salariu (in lei)",
-      "durationMillis": 635,
-      "passed": true
-    },
-    {
-      "featureFileName": "clustering_ess",
-      "featureHtmlName": "clustering_ess",
-      "refId": "[1:7]",
-      "name": "Upload ESS, elbow, clustering k=3, apoi reclustering cu cntry",
-      "durationMillis": 3995,
-      "passed": true
-    },
-    {
-      "featureFileName": "llm_ess",
-      "featureHtmlName": "llm_ess",
+      "featureFileName": "ui_clustering",
+      "featureHtmlName": "ui_clustering",
       "refId": "[1:11]",
-      "name": "Clustering ESS -> interpretare LLM -> intrebare despre bias intersectional",
-      "durationMillis": 236257,
+      "name": "Elbow -> clustering k -> reclustering cu cntry",
+      "durationMillis": 69880,
       "passed": true
     }
   ],
-  "serialDurationMillis": 241802
+  "serialDurationMillis": 69880
 }</script>
 </body>
 </html>

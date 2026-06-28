@@ -42,4 +42,4 @@ Scenario: Elbow -> clustering k -> reclustering cu cntry
   * delay(2000)
   * click('#run_clustering')
   * delay(5000)
-  * delay(15000)
+  * delay(25000)

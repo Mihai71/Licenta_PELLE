@@ -27,7 +27,7 @@ Scenario: Curatare gndr=9 si analiza Cohen's d (gndr -> hinctnta)
 
   # 6) Tab Analiza Generala (Cohen's d, Bias Score)
   * click("a[data-value='tab_bias']")
-  * delay(3500)
+  * delay(5500)
 
   # 7) Tab Vizualizare, panoul density plot
   * click("a[data-value='tab_viz']")

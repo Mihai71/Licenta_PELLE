@@ -2,7 +2,6 @@
 # app.R - Dashboard Interactiv pentru Detectarea Disparităților
 options(shiny.maxRequestSize = 50 * 1024^2)
 # Arhitectură: R Shiny (UI + server reactiv) + Python via reticulate (procesare date)
-# Cerințe implementate: FR-01 .. FR-07
 # reticulate::use_python("C:/Users/pelle/AppData/Local/Programs/Python/Python312/python.exe", required = TRUE)
 library(shiny)
 library(shinydashboard)
@@ -20,7 +19,8 @@ if (requireNamespace("plotly", quietly = TRUE)) library(plotly)
 
 # readxl pentru suport Excel
 if (requireNamespace("readxl", quietly = TRUE)) library(readxl)
-
+Sys.unsetenv("RETICULATE_PYTHON")
+reticulate::use_virtualenv("biasapp", required = TRUE)
 source("R/standards.R")
 source_python("logic.py")
 source_python("clustering.py")

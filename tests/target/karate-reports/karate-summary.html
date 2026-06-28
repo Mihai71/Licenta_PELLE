@@ -352,27 +352,27 @@
     <script src="res/karate-report.js"></script>
     <script id="karate-data" type="application/json">{
   "env": null,
-  "reportDate": "2026-06-24 14:26:26",
+  "reportDate": "2026-06-27 15:18:26",
   "karateVersion": "2.1.0",
   "summary": {
-    "feature_count": 5,
-    "feature_passed": 5,
+    "feature_count": 1,
+    "feature_passed": 1,
     "feature_failed": 0,
-    "scenario_count": 5,
-    "scenario_passed": 5,
+    "scenario_count": 1,
+    "scenario_passed": 1,
     "scenario_failed": 0,
     "scenario_skipped": 0,
-    "duration_millis": 241906,
+    "duration_millis": 70000,
     "status": "passed"
   },
   "features": [
     {
-      "name": "Flux analiza generala - salarii (SPD / Disparate Impact)",
-      "relativePath": "general_salarii.feature",
-      "fileName": "general_salarii",
+      "name": "UI automation - clustering K-Means (ESS) - elbow, clustering, atribut cntry",
+      "relativePath": "ui_clustering.feature",
+      "fileName": "ui_clustering",
       "passed": true,
       "failed": false,
-      "durationMillis": 577,
+      "durationMillis": 69952,
       "scenarioCount": 1,
       "passedCount": 1,
       "failedCount": 0,
@@ -380,107 +380,13 @@
       "passedRate": 100,
       "scenarios": [
         {
-          "name": "Upload, profilare si metrici binare pe gen -> promovat",
-          "refId": "[1:5]",
-          "passed": true,
-          "skipped": false,
-          "durationMillis": 525,
-          "tags": null
-        }
-      ]
-    },
-    {
-      "name": "Flux analiza generala - ESS curatat (Cohen's d, gndr -> hinctnta)",
-      "relativePath": "general_ess.feature",
-      "fileName": "general_ess",
-      "passed": true,
-      "failed": false,
-      "durationMillis": 391,
-      "scenarioCount": 1,
-      "passedCount": 1,
-      "failedCount": 0,
-      "skippedCount": 0,
-      "passedRate": 100,
-      "scenarios": [
-        {
-          "name": "Upload ESS curatat si metrici numerice gndr -> hinctnta",
-          "refId": "[1:6]",
-          "passed": true,
-          "skipped": false,
-          "durationMillis": 390,
-          "tags": null
-        }
-      ]
-    },
-    {
-      "name": "Flux socio-demografic (varsta / educatie / regiuni) - salarii",
-      "relativePath": "socio_salarii.feature",
-      "fileName": "socio_salarii",
-      "passed": true,
-      "failed": false,
-      "durationMillis": 637,
-      "scenarioCount": 1,
-      "passedCount": 1,
-      "failedCount": 0,
-      "skippedCount": 0,
-      "passedRate": 100,
-      "scenarios": [
-        {
-          "name": "Grupare pe varsta, educatie si regiuni pe salariu (in lei)",
-          "refId": "[1:6]",
-          "passed": true,
-          "skipped": false,
-          "durationMillis": 635,
-          "tags": null
-        }
-      ]
-    },
-    {
-      "name": "Flux clustering K-Means (ESS) - elbow + clustering + atribut extra cntry",
-      "relativePath": "clustering_ess.feature",
-      "fileName": "clustering_ess",
-      "passed": true,
-      "failed": false,
-      "durationMillis": 3998,
-      "scenarioCount": 1,
-      "passedCount": 1,
-      "failedCount": 0,
-      "skippedCount": 0,
-      "passedRate": 100,
-      "scenarios": [
-        {
-          "name": "Upload ESS, elbow, clustering k=3, apoi reclustering cu cntry",
-          "refId": "[1:7]",
-          "passed": true,
-          "skipped": false,
-          "durationMillis": 3995,
-          "tags": [
-            "@api"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "LLM, interpretare clustering + intrebare custom (via Ollama)",
-      "relativePath": "llm_ess.feature",
-      "fileName": "llm_ess",
-      "passed": true,
-      "failed": false,
-      "durationMillis": 236260,
-      "scenarioCount": 1,
-      "passedCount": 1,
-      "failedCount": 0,
-      "skippedCount": 0,
-      "passedRate": 100,
-      "scenarios": [
-        {
-          "name": "Clustering ESS -> interpretare LLM -> intrebare despre bias intersectional",
+          "name": "Elbow -> clustering k -> reclustering cu cntry",
           "refId": "[1:11]",
           "passed": true,
           "skipped": false,
-          "durationMillis": 236257,
+          "durationMillis": 69880,
           "tags": [
-            "@llm"
+            "@ui"
           ]
         }
       ]

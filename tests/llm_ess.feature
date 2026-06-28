@@ -16,7 +16,7 @@ Scenario: Clustering ESS -> interpretare LLM -> intrebare despre bias intersecti
   Then status 200
   * def fid = response.file_id
 
-  # 1) Clustering + interpretare LLM (genereaza prin Ollama; testul trece cand vine textul)
+  # 1) Clustering cu interpretare LLM (testul trece cand vine textul)
   Given path 'llm', 'interpret'
   And form field file_id = fid
   And form field col_sex = 'gndr'
